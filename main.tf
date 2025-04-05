@@ -323,7 +323,7 @@ resource "aws_instance" "linux_instance" {
         encrypted = true
     }
 
-    # user_data = [arranque_linux.sh]
+    user_data = file("arranque_linux.sh")
     tags = {
         Name = "linux-${local.instance_name}"
     }
@@ -345,7 +345,12 @@ resource "aws_instance" "windows_instance" {
         encrypted = true
     }
 
-    # user_data = [arranque_windows.ps1]
+    user_data = <<-EOF
+        <powershell>
+        $(file("arranque_windows.ps1"))
+        </powershell>
+        EOF
+
     tags = {
         Name = "windows-${local.instance_name}"
     }
