@@ -12,56 +12,141 @@ data "aws_availability_zones" "available" {}
 #                 VPC                      #
 #############################################
 # Se crea una VPC con sus subredes públicas y privadas.
-module "vpc" {
-    source  = "terraform-aws-modules/vpc/aws"
-    version = "5.8.1"
-    
-    name = "vpc-${local.instance_name}"
-    cidr = local.vpc_cidr
-    
-    azs             = local.azs
-    private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k)]
-    public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 4)]
-
-    private_subnet_names = ["subnet-private-1", "subnet-private-2"]
-    public_subnet_names  = ["subnet-public-1", "subnet-public-2"]
-
-    create_database_subnet_group  = false # Se desactiva la creación del grupo de subredes de base de datos
-    manage_default_network_acl    = false # Se desactiva la creación del ACL de red por defecto
-    manage_default_route_table    = false # Se desactiva la creación de la tabla de rutas por defecto
-    manage_default_security_group = false # Se desactiva la creación del grupo de seguridad por defecto
-
-    enable_dns_hostnames = true # Se habilitan los nombres de host DNS
-    enable_dns_support   = true # Se habilita el soporte DNS
-
-    enable_nat_gateway = true # Se habilita el NAT Gateway
-    single_nat_gateway = true # Se utiliza un solo NAT Gateway
-    
-    enable_flow_log                      = true # Se habilitan los logs de flujo
-    create_flow_log_cloudwatch_iam_role  = true # Se crea el rol IAM para los logs de flujo
-    create_flow_log_cloudwatch_log_group = true # Se crea el grupo de logs de CloudWatch
-    flow_log_max_aggregation_interval    = 60
-}
-
-#############################################
-#            Internet Gateway               #
-#############################################
-resource "aws_internet_gateway" "igw_project" {
-    vpc_id = module.vpc.vpc_id
+# Crear la VPC
+resource "aws_vpc" "main" {
+    cidr_block = local.vpc_cidr
+    instance_tenancy = "default"
+    enable_dns_support = true
+    enable_dns_hostnames = true
 
     tags = {
-        Name = "igw-${local.instance_name}"
+        Name = "proyecto-vpc"
+    }
+}
+# Crear Subredes Públicas
+resource "aws_subnet" "public_subnet1" {
+    vpc_id     = aws_vpc.main.id
+    cidr_block = "10.0.0.0/20"
+    availability_zone = "us-east-1a"
+    tags = {
+        Name = "proyecto-subnet-public1-us-east-1a"
     }
 }
 
-#############################################
-#           Public Route Table              #
-#############################################
-resource "aws_route_table" "rtb_public_project" {
-    vpc_id = module.vpc.vpc_id
-
+resource "aws_subnet" "public_subnet2" {
+    vpc_id     = aws_vpc.main.id
+    cidr_block = "10.0.16.0/20"
+    availability_zone = "us-east-1b"
     tags = {
-        Name = "rtb-public-${local.instance_name}"
+        Name = "proyecto-subnet-public2-us-east-1b"
     }
 }
 
+# Crear Subredes Privadas
+resource "aws_subnet" "private_subnet1" {
+    vpc_id     = aws_vpc.main.id
+    cidr_block = "10.0.128.0/20"
+    availability_zone = "us-east-1a"
+    tags = {
+        Name = "proyecto-subnet-private1-us-east-1a"
+    }
+}
+
+resource "aws_subnet" "private_subnet2" {
+    vpc_id     = aws_vpc.main.id
+    cidr_block = "10.0.144.0/20"
+    availability_zone = "us-east-1b"
+    tags = {
+        Name = "proyecto-subnet-private2-us-east-1b"
+    }
+}
+
+# Crear el Internet Gateway
+resource "aws_internet_gateway" "igw" {
+    vpc_id = aws_vpc.main.id
+    tags = {
+        Name = "proyecto-igw"
+    }
+}
+
+# Crear la tabla de rutas públicas
+resource "aws_route_table" "public_route_table" {
+    vpc_id = aws_vpc.main.id
+    tags = {
+        Name = "proyecto-rtb-public"
+    }
+}
+
+resource "aws_route" "public_route" {
+    route_table_id         = aws_route_table.public_route_table.id
+    destination_cidr_block = "0.0.0.0/0"
+    gateway_id             = aws_internet_gateway.igw.id
+}
+
+# Asociar subredes públicas con la tabla de rutas públicas
+resource "aws_route_table_association" "public_subnet1_association" {
+    subnet_id      = aws_subnet.public_subnet1.id
+    route_table_id = aws_route_table.public_route_table.id
+}
+
+resource "aws_route_table_association" "public_subnet2_association" {
+    subnet_id      = aws_subnet.public_subnet2.id
+    route_table_id = aws_route_table.public_route_table.id
+}
+
+# Crear la Elastic IP
+resource "aws_eip" "nat_eip" {
+    domain = "vpc"
+    tags = {
+        Name = "proyecto-eip-us-east-1a"
+    }
+}
+
+# Crear el NAT Gateway
+resource "aws_nat_gateway" "nat_gateway" {
+    allocation_id = aws_eip.nat_eip.id
+    subnet_id     = aws_subnet.public_subnet1.id
+    tags = {
+        Name = "proyecto-nat-public1-us-east-1a"
+    }
+}
+
+# Crear la tabla de rutas privadas para la subred privada 1
+resource "aws_route_table" "private_route_table_1" {
+    vpc_id = aws_vpc.main.id
+    tags = {
+        Name = "proyecto-rtb-private1-us-east-1a"
+    }
+}
+
+resource "aws_route" "private_route_1" {
+    route_table_id         = aws_route_table.private_route_table_1.id
+    destination_cidr_block = "0.0.0.0/0"
+    nat_gateway_id         = aws_nat_gateway.nat_gateway.id
+}
+
+# Asociar subred privada 1 con la tabla de rutas privadas 1
+resource "aws_route_table_association" "private_subnet1_association" {
+    subnet_id      = aws_subnet.private_subnet1.id
+    route_table_id = aws_route_table.private_route_table_1.id
+}
+
+# Crear la tabla de rutas privadas para la subred privada 2
+resource "aws_route_table" "private_route_table_2" {
+    vpc_id = aws_vpc.main.id
+    tags = {
+        Name = "proyecto-rtb-private2-us-east-1b"
+    }
+}
+
+resource "aws_route" "private_route_2" {
+    route_table_id         = aws_route_table.private_route_table_2.id
+    destination_cidr_block = "0.0.0.0/0"
+    nat_gateway_id         = aws_nat_gateway.nat_gateway.id
+}
+
+# Asociar subred privada 2 con la tabla de rutas privadas 2
+resource "aws_route_table_association" "private_subnet2_association" {
+    subnet_id      = aws_subnet.private_subnet2.id
+    route_table_id = aws_route_table.private_route_table_2.id
+}
