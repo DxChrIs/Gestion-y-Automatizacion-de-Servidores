@@ -44,7 +44,7 @@ resource "aws_subnet" "public_subnet2" {
 # Crear Subredes Privadas
 resource "aws_subnet" "private_subnet1" {
     vpc_id     = aws_vpc.main.id
-    cidr_block = "10.0.128.0/24"
+    cidr_block = "10.0.32.0/24"
     availability_zone = "${var.region}a"
     tags = {
         Name = "subnet-private-1-${var.region}"
@@ -53,7 +53,7 @@ resource "aws_subnet" "private_subnet1" {
 
 resource "aws_subnet" "private_subnet2" {
     vpc_id     = aws_vpc.main.id
-    cidr_block = "10.0.144.0/24"
+    cidr_block = "10.0.64.0/24"
     availability_zone = "${var.region}b"
     tags = {
         Name = "subnet-private-2-${var.region}"
