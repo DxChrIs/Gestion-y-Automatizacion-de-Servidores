@@ -9,7 +9,7 @@ locals {
 data "aws_availability_zones" "available" {}
 
 #############################################
-#                 VPC                      #
+#                 VPC                       #
 #############################################
 # Se crea una VPC con sus subredes públicas y privadas.
 # Crear la VPC
@@ -22,6 +22,9 @@ resource "aws_vpc" "main" {
         Name = "vpc-${local.instance_name}"
     }
 }
+#############################################
+#             Public Subnet                 #
+#############################################
 # Crear Subredes Públicas
 resource "aws_subnet" "public_subnet1" {
     vpc_id     = aws_vpc.main.id
@@ -41,6 +44,9 @@ resource "aws_subnet" "public_subnet2" {
     }
 }
 
+#############################################
+#             Private Subnet                #
+#############################################
 # Crear Subredes Privadas
 resource "aws_subnet" "private_subnet1" {
     vpc_id     = aws_vpc.main.id
@@ -60,6 +66,9 @@ resource "aws_subnet" "private_subnet2" {
     }
 }
 
+#############################################
+#            Internet Gateway               #
+#############################################
 # Crear el Internet Gateway
 resource "aws_internet_gateway" "igw" {
     vpc_id = aws_vpc.main.id
@@ -68,6 +77,9 @@ resource "aws_internet_gateway" "igw" {
     }
 }
 
+#############################################
+#           Public Route Table              #
+#############################################
 # Crear la tabla de rutas públicas
 resource "aws_route_table" "public_route_table" {
     vpc_id = aws_vpc.main.id
@@ -93,6 +105,9 @@ resource "aws_route_table_association" "public_subnet2_association" {
     route_table_id = aws_route_table.public_route_table.id
 }
 
+#############################################
+#               Elastic IP                  #
+#############################################
 # Crear la Elastic IP
 resource "aws_eip" "nat_eip" {
     domain = "vpc"
@@ -101,6 +116,9 @@ resource "aws_eip" "nat_eip" {
     }
 }
 
+#############################################
+#               NAT Gateway                 #
+#############################################
 # Crear el NAT Gateway
 resource "aws_nat_gateway" "nat_gateway" {
     allocation_id = aws_eip.nat_eip.id
@@ -110,6 +128,9 @@ resource "aws_nat_gateway" "nat_gateway" {
     }
 }
 
+#############################################
+#            Private Route Table            #
+#############################################
 # Crear la tabla de rutas privadas para la subred privada 1
 resource "aws_route_table" "private_route_table_1" {
     vpc_id = aws_vpc.main.id
@@ -149,3 +170,88 @@ resource "aws_route_table_association" "private_subnet2_association" {
     subnet_id      = aws_subnet.private_subnet2.id
     route_table_id = aws_route_table.private_route_table_2.id
 }
+
+#############################################
+#               Network ACL                 #
+#############################################
+resource "aws_network_acl" "public_acl" {
+    vpc_id = aws_vpc.main.id
+    subnet_ids = [
+        aws_subnet.public_subnet1.id,
+        aws_subnet.public_subnet2.id
+    ]
+    tags = {
+        Name = "acl-public-${var.region}"
+    }
+}
+# Entrada: permitir SSH (22)
+resource "aws_network_acl_rule" "inbound_ssh" {
+    network_acl_id = aws_network_acl.public_acl.id
+    rule_number    = 100
+    egress         = false
+    protocol       = "tcp"
+    rule_action    = "allow"
+    cidr_block     = "0.0.0.0/0"
+    from_port      = 22
+    to_port        = 22
+}
+# Entrada: permitir RDP (3389)
+resource "aws_network_acl_rule" "inbound_rdp" {
+    network_acl_id = aws_network_acl.public_acl.id
+    rule_number    = 110
+    egress         = false
+    protocol       = "tcp"
+    rule_action    = "allow"
+    cidr_block     = "0.0.0.0/0"
+    from_port      = 3389
+    to_port        = 3389
+}
+# Entrada: permitir respuesta a conexiones ya establecidas
+resource "aws_network_acl_rule" "inbound_ephemeral" {
+    network_acl_id = aws_network_acl.public_acl.id
+    rule_number    = 120
+    egress         = false
+    protocol       = "tcp"
+    rule_action    = "allow"
+    cidr_block     = "0.0.0.0/0"
+    from_port      = 1024
+    to_port        = 65535
+}
+# Salida: permitir SSH
+resource "aws_network_acl_rule" "outbound_ssh" {
+    network_acl_id = aws_network_acl.public_acl.id
+    rule_number    = 100
+    egress         = true
+    protocol       = "tcp"
+    rule_action    = "allow"
+    cidr_block     = "0.0.0.0/0"
+    from_port      = 22
+    to_port        = 22
+}
+# Salida: permitir RDP
+resource "aws_network_acl_rule" "outbound_rdp" {
+    network_acl_id = aws_network_acl.public_acl.id
+    rule_number    = 110
+    egress         = true
+    protocol       = "tcp"
+    rule_action    = "allow"
+    cidr_block     = "0.0.0.0/0"
+    from_port      = 3389
+    to_port        = 3389
+}
+# Salida: permitir conexiones efímeras (respuesta)
+resource "aws_network_acl_rule" "outbound_ephemeral" {
+    network_acl_id = aws_network_acl.public_acl.id
+    rule_number    = 120
+    egress         = true
+    protocol       = "tcp"
+    rule_action    = "allow"
+    cidr_block     = "0.0.0.0/0"
+    from_port      = 1024
+    to_port        = 65535
+}
+
+#############################################
+#              Instance EC2                 #
+#############################################
+
