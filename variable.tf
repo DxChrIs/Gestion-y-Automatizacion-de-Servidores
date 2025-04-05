@@ -23,8 +23,3 @@ variable "key_name" {
     type        = string
     default     = "ssh-code"
 }
-variable "security_group_name" {
-    description = "The name of the security group to create"
-    type        = string
-    default     = "ssh-rdp-access"
-}

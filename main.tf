@@ -252,6 +252,81 @@ resource "aws_network_acl_rule" "outbound_ephemeral" {
 }
 
 #############################################
+#             Security Group                #
+#############################################
+
+resource "aws_security_group" "ssh_access" {
+    vpc_id      = aws_vpc.main.id
+    name        = "ssh-${var.region}-ec2-sg"
+    description = "Allow SSH access"
+    ingress {
+        description = "SSH access"
+        from_port   = 22
+        to_port     = 22
+        protocol    = "tcp"
+        cidr_blocks  = ["0.0.0.0/0"]
+    }
+
+    egress {
+        description = "Allow all outbound traffic"
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        cidr_blocks  = ["0.0.0.0/0"]
+    }
+    tags = {
+        Name = "sg-${local.instance_name}-ssh"
+    }
+}
+
+resource "aws_security_group" "rdp_access" {
+    vpc_id      = aws_vpc.main.id
+    name        = "rdp-${var.region}-ec2-sg"
+    description = "Allow RDP access"
+
+    ingress {
+        description = "RDP access"
+        from_port   = 3389
+        to_port     = 3389
+        protocol    = "tcp"
+        cidr_blocks  = ["10.0.0.0/8"]
+    }
+
+    egress {
+        description = "Allow all outbound traffic"
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        cidr_blocks  = ["0.0.0.0/0"]
+    }
+    tags = {
+        Name = "sg-${local.instance_name}-rdp"
+    }
+}
+
+#############################################
 #              Instance EC2                 #
 #############################################
 
+resource "aws_instance" "linux_instance" {
+    ami           = var.linux_ami
+    instance_type = var.instance_type
+    
+    key_name      = var.key_name
+    vpc_security_group_ids = [aws_security_group.ssh_access.id]
+
+    subnet_id     = aws_subnet.public_subnet1.id
+    associate_public_ip_address = true
+
+    monitoring = true
+    root_block_device {
+        volume_size = 20
+        volume_type = "gp2"
+        encrypted = true
+    }
+
+    # user_data = [arranque_linux.sh]
+    tags = {
+        Name = "linux-${local.instance_name}"
+    }
+}
