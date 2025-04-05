@@ -18,3 +18,7 @@ output "instance_ami" {
     description = "The AMI ID of the EC2 instance"
     value       = aws_instance.linux_instance.ami
 }
+output "instance_dns_name" {
+    description = "The DNS name of the EC2 instance"
+    value       = aws_instance.linux_instance.public_dns
+}

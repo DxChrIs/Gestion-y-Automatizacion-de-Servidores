@@ -313,7 +313,7 @@ resource "aws_instance" "linux_instance" {
     key_name      = var.key_name
     vpc_security_group_ids = [aws_security_group.ssh_access.id]
 
-    subnet_id     = aws_subnet.private_subnet1.id
+    subnet_id     = aws_subnet.public_subnet1.id
     associate_public_ip_address = true
 
     monitoring = true
@@ -335,12 +335,12 @@ resource "aws_instance" "windows_instance" {
     key_name      = var.key_name
     vpc_security_group_ids = [aws_security_group.rdp_access.id]
 
-    subnet_id     = aws_subnet.private_subnet2.id
+    subnet_id     = aws_subnet.public_subnet2.id
     associate_public_ip_address = true
 
     monitoring = true
     root_block_device {
-        volume_size = 20
+        volume_size = 30
         volume_type = "gp2"
         encrypted = true
     }
