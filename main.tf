@@ -254,7 +254,6 @@ resource "aws_network_acl_rule" "outbound_ephemeral" {
 #############################################
 #             Security Group                #
 #############################################
-
 resource "aws_security_group" "ssh_access" {
     vpc_id      = aws_vpc.main.id
     name        = "ssh-${var.region}-ec2-sg"
@@ -307,7 +306,6 @@ resource "aws_security_group" "rdp_access" {
 #############################################
 #              Instance EC2                 #
 #############################################
-
 resource "aws_instance" "linux_instance" {
     ami           = var.linux_ami
     instance_type = var.instance_type
@@ -315,7 +313,7 @@ resource "aws_instance" "linux_instance" {
     key_name      = var.key_name
     vpc_security_group_ids = [aws_security_group.ssh_access.id]
 
-    subnet_id     = aws_subnet.public_subnet1.id
+    subnet_id     = aws_subnet.private_subnet1.id
     associate_public_ip_address = true
 
     monitoring = true
@@ -328,5 +326,27 @@ resource "aws_instance" "linux_instance" {
     # user_data = [arranque_linux.sh]
     tags = {
         Name = "linux-${local.instance_name}"
+    }
+}
+resource "aws_instance" "windows_instance" {
+    ami           = var.windows_ami
+    instance_type = var.instance_type
+    
+    key_name      = var.key_name
+    vpc_security_group_ids = [aws_security_group.rdp_access.id]
+
+    subnet_id     = aws_subnet.private_subnet2.id
+    associate_public_ip_address = true
+
+    monitoring = true
+    root_block_device {
+        volume_size = 20
+        volume_type = "gp2"
+        encrypted = true
+    }
+
+    # user_data = [arranque_windows.ps1]
+    tags = {
+        Name = "windows-${local.instance_name}"
     }
 }
