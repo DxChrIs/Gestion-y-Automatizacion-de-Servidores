@@ -124,7 +124,7 @@ resource "aws_nat_gateway" "nat_gateway" {
     allocation_id = aws_eip.nat_eip.id
     subnet_id     = aws_subnet.public_subnet1.id
     tags = {
-        Name = "nat-public-1-${var.region}a"
+        Name = "nat-private-1-${var.region}a"
     }
 }
 
@@ -273,6 +273,7 @@ resource "aws_security_group" "ssh_access" {
         protocol    = "-1"
         cidr_blocks  = ["0.0.0.0/0"]
     }
+
     tags = {
         Name = "sg-${local.instance_name}-ssh"
     }
@@ -288,7 +289,7 @@ resource "aws_security_group" "rdp_access" {
         from_port   = 3389
         to_port     = 3389
         protocol    = "tcp"
-        cidr_blocks  = ["10.0.0.0/8"]
+        cidr_blocks  = ["0.0.0.0/0"]
     }
 
     egress {
@@ -306,52 +307,136 @@ resource "aws_security_group" "rdp_access" {
 #############################################
 #              Instance EC2                 #
 #############################################
-resource "aws_instance" "linux_instance" {
-    ami           = var.linux_ami
+resource "aws_launch_template" "linux_template" {
+    name_prefix   = "linux-template-"
+    image_id      = var.linux_ami
     instance_type = var.instance_type
     
     key_name      = var.key_name
-    vpc_security_group_ids = [aws_security_group.ssh_access.id]
 
-    subnet_id     = aws_subnet.public_subnet1.id
-    associate_public_ip_address = true
-
-    monitoring = true
-    root_block_device {
-        volume_size = 20
-        volume_type = "gp2"
-        encrypted = true
+    network_interfaces {
+        associate_public_ip_address = true
+        security_groups = [aws_security_group.ssh_access.id]
     }
 
-    user_data = file("arranque_linux.sh")
-    tags = {
-        Name = "linux-${local.instance_name}"
+    monitoring {
+        enabled = true
+    }
+
+    block_device_mappings {
+        device_name = "/dev/sda1"
+        ebs {
+            volume_size = 20
+            volume_type = "gp2"
+            encrypted   = true
+        }
+    }
+
+    user_data = base64encode(file("arranque_linux.sh"))
+    tag_specifications {
+        resource_type = "instance"
+        tags = {
+            Name = "linux-${local.instance_name}"
+        }
     }
 }
-resource "aws_instance" "windows_instance" {
-    ami           = var.windows_ami
+resource "aws_launch_template" "windows_template" {
+    name_prefix   = "windows-template-"
+    image_id      = var.windows_ami
     instance_type = var.instance_type
     
     key_name      = var.key_name
-    vpc_security_group_ids = [aws_security_group.rdp_access.id]
 
-    subnet_id     = aws_subnet.public_subnet2.id
-    associate_public_ip_address = true
-
-    monitoring = true
-    root_block_device {
-        volume_size = 30
-        volume_type = "gp2"
-        encrypted = true
+    network_interfaces {
+        associate_public_ip_address = true
+        security_groups = [aws_security_group.rdp_access.id]
     }
 
-    user_data = <<-EOF
+    monitoring {
+        enabled = true
+    }
+
+    block_device_mappings {
+        device_name = "/dev/sda1"
+        ebs {
+            volume_size = 30
+            volume_type = "gp2"
+            encrypted   = true
+        }
+    }
+
+    user_data = base64encode(<<-EOF
         <powershell>
         $(file("arranque_windows.ps1"))
         </powershell>
         EOF
+        )
 
-    tags = {
-        Name = "windows-${local.instance_name}"
+    tag_specifications {
+        resource_type = "instance"
+        tags = {
+            Name = "windows-${local.instance_name}"
+        }
+    }
+
+    lifecycle {
+        create_before_destroy = true
+    }
+}
+
+#############################################
+#            Auto Scaling Group             #
+#############################################
+resource "aws_autoscaling_group" "linux_asg" {
+    name                = "linux-asg-${local.instance_name}"
+
+    desired_capacity    = 1
+    max_size            = 2
+    min_size            = 1
+
+    health_check_type   = "EC2"
+    health_check_grace_period = 300
+    
+    vpc_zone_identifier = [aws_subnet.public_subnet1.id]
+    launch_template {
+        id      = aws_launch_template.linux_template.id
+        version = "$Latest"
+    }
+
+    tag {
+        key = "Name"
+        value = "linux-${local.instance_name}"
+        propagate_at_launch = true
+    }
+
+    lifecycle {
+        create_before_destroy = true
+    }
+}
+resource "aws_autoscaling_group" "windows_asg" {
+    name                = "windows-asg-${local.instance_name}"
+
+    desired_capacity    = 1
+    max_size            = 2
+    min_size            = 1
+
+    health_check_type   = "EC2"
+    health_check_grace_period = 300
+
+    vpc_zone_identifier = [aws_subnet.public_subnet2.id]
+
+    launch_template {
+        id      = aws_launch_template.windows_template.id
+        version = "$Latest"
+    }
+
+    tag {
+        key                 = "Name"
+        value               = "windows-${local.instance_name}"
+        propagate_at_launch = true
+    }
+
+    lifecycle {
+        create_before_destroy = true
     }
 }
