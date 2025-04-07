@@ -279,17 +279,25 @@ resource "aws_security_group" "ssh_access" {
     }
 }
 
-resource "aws_security_group" "rdp_access" {
+resource "aws_security_group" "winrm_rdp_access" {
     vpc_id      = aws_vpc.main.id
-    name        = "rdp-${var.region}-ec2-sg"
-    description = "Allow RDP access"
+    name        = "winrm-rdp-${var.region}-ec2-sg"
+    description = "Allow winRM and RDP access"
+
+    ingress {
+        description = "WinRM access"
+        from_port   = 5985      # WinRM HTTP
+        to_port     = 5985
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
 
     ingress {
         description = "RDP access"
         from_port   = 3389
         to_port     = 3389
         protocol    = "tcp"
-        cidr_blocks  = ["0.0.0.0/0"]
+        cidr_blocks = ["0.0.0.0/0"]
     }
 
     egress {
@@ -300,7 +308,7 @@ resource "aws_security_group" "rdp_access" {
         cidr_blocks  = ["0.0.0.0/0"]
     }
     tags = {
-        Name = "sg-${local.instance_name}-rdp"
+        Name = "sg-${local.instance_name}-winrm-rdp"
     }
 }
 
@@ -349,7 +357,7 @@ resource "aws_launch_template" "windows_template" {
 
     network_interfaces {
         associate_public_ip_address = true
-        security_groups = [aws_security_group.rdp_access.id]
+        security_groups = [aws_security_group.winrm_rdp_access.id]
     }
 
     monitoring {
