@@ -300,6 +300,14 @@ resource "aws_security_group" "winrm_rdp_access" {
         cidr_blocks = ["0.0.0.0/0"]
     }
 
+    ingress {
+        description = "SSH access for Ansible playbooks"
+        from_port   = 22
+        to_port     = 22
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
     egress {
         description = "Allow all outbound traffic"
         from_port   = 0
