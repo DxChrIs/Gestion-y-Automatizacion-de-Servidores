@@ -195,6 +195,7 @@ resource "aws_network_acl_rule" "inbound_ssh" {
     from_port      = 22
     to_port        = 22
 }
+
 # Entrada: permitir RDP (3389)
 resource "aws_network_acl_rule" "inbound_rdp" {
     network_acl_id = aws_network_acl.public_acl.id
@@ -206,6 +207,7 @@ resource "aws_network_acl_rule" "inbound_rdp" {
     from_port      = 3389
     to_port        = 3389
 }
+
 # Entrada: permitir respuesta a conexiones ya establecidas
 resource "aws_network_acl_rule" "inbound_ephemeral" {
     network_acl_id = aws_network_acl.public_acl.id
@@ -217,6 +219,43 @@ resource "aws_network_acl_rule" "inbound_ephemeral" {
     from_port      = 1024
     to_port        = 65535
 }
+
+# Entrada: permitir HTTP (80)
+resource "aws_network_acl_rule" "inbound_http" {
+    network_acl_id = aws_network_acl.public_acl.id
+    rule_number    = 130
+    egress         = false
+    protocol       = "tcp"
+    rule_action    = "allow"
+    cidr_block     = "0.0.0.0/0"
+    from_port      = 80
+    to_port        = 80
+}
+
+# Entrada: permitir HTTPS (443)
+resource "aws_network_acl_rule" "inbound_https" {
+    network_acl_id = aws_network_acl.public_acl.id
+    rule_number    = 140
+    egress         = false
+    protocol       = "tcp"
+    rule_action    = "allow"
+    cidr_block     = "0.0.0.0/0"
+    from_port      = 443
+    to_port        = 443
+}
+
+# Entrada: permitir ICMP
+resource "aws_network_acl_rule" "inbound_icmp" {
+    network_acl_id = aws_network_acl.public_acl.id
+    rule_number    = 150
+    egress         = false
+    protocol       = "icmp"
+    rule_action    = "allow"
+    cidr_block     = "0.0.0.0/0"
+    from_port      = -1
+    to_port        = -1
+}
+
 # Salida: permitir SSH
 resource "aws_network_acl_rule" "outbound_ssh" {
     network_acl_id = aws_network_acl.public_acl.id
@@ -228,6 +267,7 @@ resource "aws_network_acl_rule" "outbound_ssh" {
     from_port      = 22
     to_port        = 22
 }
+
 # Salida: permitir RDP
 resource "aws_network_acl_rule" "outbound_rdp" {
     network_acl_id = aws_network_acl.public_acl.id
@@ -239,6 +279,7 @@ resource "aws_network_acl_rule" "outbound_rdp" {
     from_port      = 3389
     to_port        = 3389
 }
+
 # Salida: permitir conexiones efímeras (respuesta)
 resource "aws_network_acl_rule" "outbound_ephemeral" {
     network_acl_id = aws_network_acl.public_acl.id
@@ -249,6 +290,42 @@ resource "aws_network_acl_rule" "outbound_ephemeral" {
     cidr_block     = "0.0.0.0/0"
     from_port      = 1024
     to_port        = 65535
+}
+
+# Salida: permitir HTTP (80)
+resource "aws_network_acl_rule" "outbound_http" {
+    network_acl_id = aws_network_acl.public_acl.id
+    rule_number    = 130
+    egress         = true
+    protocol       = "tcp"
+    rule_action    = "allow"
+    cidr_block     = "0.0.0.0/0"
+    from_port      = 80
+    to_port        = 80
+}
+
+# Salida: permitir HTTPS (443)
+resource "aws_network_acl_rule" "outbound_https" {
+    network_acl_id = aws_network_acl.public_acl.id
+    rule_number    = 140
+    egress         = true
+    protocol       = "tcp"
+    rule_action    = "allow"
+    cidr_block     = "0.0.0.0/0"
+    from_port      = 443
+    to_port        = 443
+}
+
+# Salida: permitir ICMP
+resource "aws_network_acl_rule" "outbound_icmp" {
+    network_acl_id = aws_network_acl.public_acl.id
+    rule_number    = 150
+    egress         = true
+    protocol       = "icmp"
+    rule_action    = "allow"
+    cidr_block     = "0.0.0.0/0"
+    from_port      = -1
+    to_port        = -1
 }
 
 #############################################
@@ -264,6 +341,22 @@ resource "aws_security_group" "ssh_access" {
         to_port     = 22
         protocol    = "tcp"
         cidr_blocks  = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "HTTPS access"
+        from_port   = 443
+        to_port     = 443
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "ICMP access"
+        from_port   = -1
+        to_port     = -1
+        protocol    = "icmp"
+        cidr_blocks = ["0.0.0.0/0"]
     }
 
     egress {
@@ -305,6 +398,22 @@ resource "aws_security_group" "winrm_rdp_access" {
         from_port   = 22
         to_port     = 22
         protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "HTTPS access"
+        from_port   = 443
+        to_port     = 443
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "ICMP access"
+        from_port   = -1
+        to_port     = -1
+        protocol    = "icmp"
         cidr_blocks = ["0.0.0.0/0"]
     }
 
