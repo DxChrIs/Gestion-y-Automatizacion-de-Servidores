@@ -1,0 +1,52 @@
+---
+- name: Configuración de SQL Server y gestión de usuarios
+  hosts: sqlserver.example.com  # O 'all' si es para todos los hosts
+  remote_user: ubuntu
+  become: yes  # Necesario para crear usuarios y hacer cambios en el sistema
+  tasks:
+    - name: Actualizar los paquetes del sistema
+      apt:
+        update_cache: yes
+        upgrade: yes
+
+    - name: Instalar el servidor SQL
+      apt:
+        name: mssql-server
+        state: present
+
+    - name: Verificar el estado del servicio SQL
+      service:
+        name: mssql-server
+        state: started
+        enabled: yes
+
+    # Crear el usuario admin
+    - name: Crear el usuario admin
+      user:
+        name: admin
+        comment: "Administrador del sistema"
+        shell: /bin/bash
+        state: present
+        create_home: yes
+        groups: sudo  # Le da permisos de administrador
+        password: "{{ 'SoyAdmin1853' | password_hash('sha512') }}"  # Cambia 'admin_password' por la contraseña que quieras
+
+    # Crear el usuario supervisor
+    - name: Crear el usuario supervisor
+      user:
+        name: supervisor
+        comment: "Supervisor del sistema"
+        shell: /bin/bash
+        state: present
+        create_home: yes
+        password: "{{ 'SoySupervisor1853' | password_hash('sha512') }}"  # Cambia 'supervisor_password' por la contraseña que quieras
+
+    # Crear el usuario empleado
+    - name: Crear el usuario empleado
+      user:
+        name: empleado
+        comment: "Empleado del sistema"
+        shell: /bin/bash
+        state: present
+        create_home: yes
+        password: "{{ 'SoyEmpleado1853' | password_hash('sha512') }}"  # Cambia 'empleado_password' por la contraseña que quieras
