@@ -14,9 +14,9 @@ data "aws_availability_zones" "available" {}
 # Se crea una VPC con sus subredes públicas y privadas.
 # Crear la VPC
 resource "aws_vpc" "main" {
-    cidr_block = local.vpc_cidr
-    instance_tenancy = "default"
-    enable_dns_support = true
+    cidr_block           = local.vpc_cidr
+    instance_tenancy     = "default"
+    enable_dns_support   = true
     enable_dns_hostnames = true
     tags = {
         Name = "vpc-${local.instance_name}"
@@ -27,8 +27,8 @@ resource "aws_vpc" "main" {
 #############################################
 # Crear Subredes Públicas
 resource "aws_subnet" "public_subnet1" {
-    vpc_id     = aws_vpc.main.id
-    cidr_block = "10.0.0.0/24"
+    vpc_id            = aws_vpc.main.id
+    cidr_block        = "10.0.0.0/24"
     availability_zone = "${var.region}a"
     tags = {
         Name = "subnet-public-1-${var.region}"
@@ -36,8 +36,8 @@ resource "aws_subnet" "public_subnet1" {
 }
 
 resource "aws_subnet" "public_subnet2" {
-    vpc_id     = aws_vpc.main.id
-    cidr_block = "10.0.16.0/24"
+    vpc_id            = aws_vpc.main.id
+    cidr_block        = "10.0.16.0/24"
     availability_zone = "${var.region}b"
     tags = {
         Name = "subnet-public-2-${var.region}"
@@ -49,8 +49,8 @@ resource "aws_subnet" "public_subnet2" {
 #############################################
 # Crear Subredes Privadas
 resource "aws_subnet" "private_subnet1" {
-    vpc_id     = aws_vpc.main.id
-    cidr_block = "10.0.32.0/24"
+    vpc_id            = aws_vpc.main.id
+    cidr_block        = "10.0.32.0/24"
     availability_zone = "${var.region}a"
     tags = {
         Name = "subnet-private-1-${var.region}"
@@ -58,8 +58,8 @@ resource "aws_subnet" "private_subnet1" {
 }
 
 resource "aws_subnet" "private_subnet2" {
-    vpc_id     = aws_vpc.main.id
-    cidr_block = "10.0.64.0/24"
+    vpc_id            = aws_vpc.main.id
+    cidr_block        = "10.0.64.0/24"
     availability_zone = "${var.region}b"
     tags = {
         Name = "subnet-private-2-${var.region}"
@@ -124,7 +124,7 @@ resource "aws_nat_gateway" "nat_gateway" {
     allocation_id = aws_eip.nat_eip.id
     subnet_id     = aws_subnet.public_subnet1.id
     tags = {
-        Name = "nat-private-1-${var.region}a"
+        Name = "nat-private-${var.region}"
     }
 }
 
@@ -175,7 +175,7 @@ resource "aws_route_table_association" "private_subnet2_association" {
 #               Network ACL                 #
 #############################################
 resource "aws_network_acl" "public_acl" {
-    vpc_id = aws_vpc.main.id
+    vpc_id     = aws_vpc.main.id
     subnet_ids = [
         aws_subnet.public_subnet1.id,
         aws_subnet.public_subnet2.id
@@ -331,22 +331,30 @@ resource "aws_network_acl_rule" "outbound_icmp" {
 #############################################
 #             Security Group                #
 #############################################
-resource "aws_security_group" "ssh_access" {
+resource "aws_security_group" "linux_access" {
     vpc_id      = aws_vpc.main.id
-    name        = "ssh-${var.region}-ec2-sg"
-    description = "Allow SSH access"
+    name        = "linux-${var.region}-sg"
+    description = "Allow SSH, ICMP, HTTPS, HTTP access"
     ingress {
         description = "SSH access"
         from_port   = 22
         to_port     = 22
         protocol    = "tcp"
-        cidr_blocks  = ["0.0.0.0/0"]
+        cidr_blocks = ["0.0.0.0/0"]
     }
 
     ingress {
         description = "HTTPS access"
         from_port   = 443
         to_port     = 443
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "HTTP access"
+        from_port   = 80
+        to_port     = 80
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
@@ -364,18 +372,18 @@ resource "aws_security_group" "ssh_access" {
         from_port   = 0
         to_port     = 0
         protocol    = "-1"
-        cidr_blocks  = ["0.0.0.0/0"]
+        cidr_blocks = ["0.0.0.0/0"]
     }
 
     tags = {
-        Name = "sg-${local.instance_name}-ssh"
+        Name = "sg-${local.instance_name}-linux"
     }
 }
 
-resource "aws_security_group" "winrm_rdp_access" {
+resource "aws_security_group" "windows_access" {
     vpc_id      = aws_vpc.main.id
-    name        = "winrm-rdp-${var.region}-ec2-sg"
-    description = "Allow winRM and RDP access"
+    name        = "windows-${var.region}-sg"
+    description = "Allow winRM, RDP, SSH, HTTPS, HTTP access"
 
     ingress {
         description = "WinRM access"
@@ -410,6 +418,14 @@ resource "aws_security_group" "winrm_rdp_access" {
     }
 
     ingress {
+        description = "HTTP access"
+        from_port   = 80
+        to_port     = 80
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
         description = "ICMP access"
         from_port   = -1
         to_port     = -1
@@ -422,10 +438,10 @@ resource "aws_security_group" "winrm_rdp_access" {
         from_port   = 0
         to_port     = 0
         protocol    = "-1"
-        cidr_blocks  = ["0.0.0.0/0"]
+        cidr_blocks = ["0.0.0.0/0"]
     }
     tags = {
-        Name = "sg-${local.instance_name}-winrm-rdp"
+        Name = "sg-${local.instance_name}-windows"
     }
 }
 
@@ -441,7 +457,7 @@ resource "aws_launch_template" "linux_template" {
 
     network_interfaces {
         associate_public_ip_address = true
-        security_groups = [aws_security_group.ssh_access.id]
+        security_groups             = [aws_security_group.linux_access.id]
     }
 
     monitoring {
@@ -474,7 +490,7 @@ resource "aws_launch_template" "windows_template" {
 
     network_interfaces {
         associate_public_ip_address = true
-        security_groups = [aws_security_group.winrm_rdp_access.id]
+        security_groups             = [aws_security_group.windows_access.id]
     }
 
     monitoring {
@@ -515,11 +531,12 @@ resource "aws_launch_template" "windows_template" {
 resource "aws_autoscaling_group" "linux_asg" {
     name                = "linux-asg-${local.instance_name}"
 
-    desired_capacity    = 1
-    max_size            = 2
+    desired_capacity    = 3
+    max_size            = 5
     min_size            = 1
 
-    health_check_type   = "EC2"
+    target_group_arns         = [aws_lb_target_group.linux_tg.arn]
+    health_check_type         = "EC2"
     health_check_grace_period = 300
     
     vpc_zone_identifier = [aws_subnet.public_subnet1.id]
@@ -529,8 +546,8 @@ resource "aws_autoscaling_group" "linux_asg" {
     }
 
     tag {
-        key = "Name"
-        value = "linux-${local.instance_name}"
+        key                 = "Name"
+        value               = "linux-${local.instance_name}"
         propagate_at_launch = true
     }
 
@@ -538,11 +555,18 @@ resource "aws_autoscaling_group" "linux_asg" {
         create_before_destroy = true
     }
 }
+resource "aws_autoscaling_policy" "lin_scale_up" {
+    name                   = "lin-scale-up-${local.instance_name}"
+    autoscaling_group_name = aws_autoscaling_group.linux_asg.name
+    scaling_adjustment     = 1
+    adjustment_type        = "ChangeInCapacity"
+    cooldown               = 300
+}
 resource "aws_autoscaling_group" "windows_asg" {
     name                = "windows-asg-${local.instance_name}"
 
-    desired_capacity    = 1
-    max_size            = 2
+    desired_capacity    = 3
+    max_size            = 5
     min_size            = 1
 
     health_check_type   = "EC2"
@@ -563,5 +587,83 @@ resource "aws_autoscaling_group" "windows_asg" {
 
     lifecycle {
         create_before_destroy = true
+    }
+}
+resource "aws_autoscaling_policy" "win_scale_up" {
+    name                   = "win-scale-up-${local.instance_name}"
+    autoscaling_group_name = aws_autoscaling_group.windows_asg.name
+    scaling_adjustment     = 1
+    adjustment_type        = "ChangeInCapacity"
+    cooldown               = 300
+}
+
+#############################################
+#           Elastic Load Balancer           #
+#############################################
+resource "aws_lb_target_group" "linux_tg" {
+    name     = "linux-tg-${var.region}"
+    port     = 80
+    protocol = "HTTP"
+    vpc_id   = aws_vpc.main.id
+}
+resource "aws_lb" "linux_lb" {
+    name               = "linux-lb-${var.region}"
+    internal           = false
+    load_balancer_type = "application"
+    security_groups    = [aws_security_group.linux_access.id]
+    subnets            = [aws_subnet.public_subnet1.id, 
+                            aws_subnet.public_subnet2.id]
+
+    tags = {
+        Name = "linux-lb-${local.instance_name}"
+    }
+}
+resource "aws_lb_listener" "linux_lb_listener" {
+    load_balancer_arn = aws_lb.linux_lb.arn
+    port              = 80
+    protocol          = "HTTP"
+    default_action {
+        type             = "forward"
+        target_group_arn = aws_lb_target_group.linux_tg.arn
+    }
+}
+resource "aws_autoscaling_attachment" "linux_attach" {
+    autoscaling_group_name = aws_autoscaling_group.linux_asg.id
+    lb_target_group_arn    = aws_lb_target_group.linux_tg.arn
+}
+
+###############################################
+#               CloudWatch Log                #
+###############################################
+resource "aws_cloudwatch_metric_alarm" "linux_scale_prevention" {
+    alarm_description   = "Monitoring CPU utilization"
+    alarm_actions       = [aws_autoscaling_policy.lin_scale_up.arn]
+    alarm_name          = "Linux-CPU-Scale-Up-${local.instance_name}"
+    comparison_operator = "GreaterThanThreshold"
+    namespace           = "AWS/EC2"
+    evaluation_periods  = 2
+    metric_name         = "CPUUtilization"
+    threshold           = 80
+    period              = 120
+    statistic           = "Average"
+
+    dimensions = {
+        AutoScalingGroupName = aws_autoscaling_group.linux_asg.name
+    }
+}
+resource "aws_cloudwatch_metric_alarm" "windows_scale_prevention" {
+    alarm_description   = "Monitoring CPU utilization"
+    alarm_actions       = [aws_autoscaling_policy.win_scale_up.arn]
+    alarm_name          = "Win-CPU-Scale-Up-${local.instance_name}"
+    comparison_operator = "GreaterThanThreshold"
+    namespace           = "AWS/EC2"
+    evaluation_periods  = 2
+    metric_name         = "CPUUtilization"
+    threshold           = 80
+    period              = 120
+    statistic           = "Average"
+
+    dimensions = {
+        AutoScalingGroupName = aws_autoscaling_group.linux_asg.name
     }
 }
