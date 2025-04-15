@@ -19,7 +19,9 @@ cd Gestion-y-Automatizacion-de-Servidores
 #Detectar direcciones IP de instancias VPC
 MY_IP=$(hostname -I | awk '{print $1}')
 nmap -sn 10.0.0.0/24 -oG - | awk '/Up$/{print $2}' > ip_list.txt
-grep -v -e "$MY_IP" -e "10.0.0.0" -e "10.0.0.1" -e "10.0.0.2" ip_list.txt > active_ips.txt
+grep -v "$MY_IP" -e "10.0.0.0" -e "10.0.0.1" -e "10.0.0.2" ip_list.txt > active_ips.txt
+
+sleep 120
 
 #Identificar y crear inventarios
 for ip in $(cat active_ips.txt); do
