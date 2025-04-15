@@ -566,17 +566,15 @@ resource "aws_instance" "control_node" {
         encrypted   = true
     }
 
-    user_data = templatefile("control_node.sh", {
-        PRIVATE_KEY = base64encode(file("/ssh-code.pem"))
-    })
+    user_data = base64encode(file("control_node.sh"))
 
     provisioner "file" {
         source = "./ssh-code.pem"
-        destination = "/home/ubuntu/Gestion-y-Automatizacion-de-Servidores/ssh-code.pem"
+        destination = "/home/ubuntu/ssh-code.pem"
     }
 
     provisioner "remote-exec" {
-        inline = ["chmod 600 /home/ubuntu/ssh-code.pem"]
+        inline = ["chmod 400 /home/ubuntu/ssh-code.pem"]
     }
 
     connection {

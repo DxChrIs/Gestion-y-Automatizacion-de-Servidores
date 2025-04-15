@@ -26,9 +26,9 @@ for ip in $(cat active_ips.txt); do
     ports=$(nmap -p 80,3306 --open $ip | grep -E "80/tcp|3306/tcp")
 
     if echo "$ports" | grep -q "80/tcp"; then
-        echo "$ip ansible_user=ubuntu ansible_ssh_private_key_file=ssh-code.pem" >> web_server_host.ini
+        echo "$ip ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/ssh-code.pem" >> web_server_host.ini
     elif echo "$ports" | grep -q "3306/tcp"; then
-        echo "$ip ansible_user=ubuntu ansible_ssh_private_key_file=ssh-code.pem" >> sql_server_host.ini
+        echo "$ip ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/ssh-code.pem" >> sql_server_host.ini
     fi
 done
 
