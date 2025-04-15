@@ -10,3 +10,8 @@ apt-get install -y ansible
 
 #Git
 apt-get install -y git
+
+#habilitar firewall
+ufw allow 22
+ufw allow 3306
+ufw --force enable

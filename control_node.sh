@@ -16,14 +16,10 @@ cd /home/ubuntu
 git clone https://github.com/DxChrIs/Gestion-y-Automatizacion-de-Servidores.git
 cd Gestion-y-Automatizacion-de-Servidores
 
-#Obtener archvio clave
-echo "${PRIVATE_KEY_B64}" | base64 -d > ssh-code.pem
-chmod 600 ssh-code.pem
-
 #Detectar direcciones IP de instancias VPC
 MY_IP=$(hostname -I | awk '{print $1}')
 nmap -sn 10.0.0.0/24 -oG - | awk '/Up$/{print $2}' > ip_list.txt
-grep -v "$MY_IP" ip_list.txt > active_ips.txt
+grep -v -e "$MY_IP" -e "10.0.0.0" -e "10.0.0.1" -e "10.0.0.2" ip_list.txt > active_ips.txt
 
 #Identificar y crear inventarios
 for ip in $(cat active_ips.txt); do

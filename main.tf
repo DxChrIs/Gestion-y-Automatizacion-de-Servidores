@@ -558,6 +558,7 @@ resource "aws_instance" "control_node" {
     key_name = var.key_name
     subnet_id = aws_subnet.public_subnet1.id
     security_groups = [aws_security_group.linux_access.id]
+    associate_public_ip_address = true
 
     root_block_device {
         volume_size = 20
@@ -569,12 +570,26 @@ resource "aws_instance" "control_node" {
         PRIVATE_KEY = base64encode(file("/ssh-code.pem"))
     })
 
+    provisioner "file" {
+        source = "./ssh-code.pem"
+        destination = "/home/ubuntu/Gestion-y-Automatizacion-de-Servidores/ssh-code.pem"
+    }
+
+    provisioner "remote-exec" {
+        inline = ["chmod 600 /home/ubuntu/ssh-code.pem"]
+    }
+
+    connection {
+        type = "ssh"
+        user = "ubuntu"
+        private_key = file("./ssh-code.pem")
+        host = aws_instance.control_node.public_ip
+    }
+
     tags = {
         Name = "control-node-${local.instance_name}"
     }
 }
-
-
 #-------------Linux web server---------------
 resource "aws_launch_template" "web_linux_template" {
     name_prefix   = "web-linux-template-"
