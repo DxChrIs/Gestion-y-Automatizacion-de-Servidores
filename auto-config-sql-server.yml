@@ -1,0 +1,23 @@
+---
+- name: Setup MySQL Server
+  hosts: all
+  become: yes
+  tasks:
+    - name: Instalar MySQL Server
+      apt:
+        name: mysql-server
+        state: present
+        update_cache: yes
+
+    - name: Habilitar y arrancar MySQL
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+
+    - name: Asegurar acceso root local sin password (solo para testing)
+      mysql_user:
+        name: root
+        host: localhost
+        password: ""
+        login_unix_socket: /var/run/mysqld/mysqld.sock
