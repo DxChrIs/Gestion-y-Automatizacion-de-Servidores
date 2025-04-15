@@ -1,12 +1,5 @@
 #!/bin/bash
-
-# Asegúrate de tener AWS CLI instalado y configurado
-apt-get install awscli -y
-
-# Configuración de AWS CLI
-aws configure set region us-east-1
-aws configure set output json
-
+sudo su
 # Actualización e instalación de dependencias
 apt-get update -y
 apt-get upgrade -y
@@ -15,6 +8,13 @@ add-apt-repository --yes --update ppa:ansible/ansible
 apt-get install -y ansible
 apt-get install -y git
 apt-get install -y nmap
+
+# Asegúrate de tener AWS CLI instalado y configurado
+apt-get install awscli -y
+
+# Configuración de AWS CLI
+aws configure set region us-east-1
+aws configure set output json
 
 # Clonar el repositorio de Git
 cd /home/ubuntu

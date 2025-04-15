@@ -728,6 +728,11 @@ resource "aws_autoscaling_group" "web_linux_asg" {
         value               = "web-linux-${local.instance_name}"
         propagate_at_launch = true
     }
+    tag {
+        key                 = "Role"
+        value               = "web"
+        propagate_at_launch = true
+    }
 
     lifecycle {
         create_before_destroy = true
@@ -764,6 +769,12 @@ resource "aws_autoscaling_group" "sql_linux_asg" {
         propagate_at_launch = true
     }
 
+    tag {
+        key                 = "Role"
+        value               = "sql"
+        propagate_at_launch = true
+    }
+    
     lifecycle {
         create_before_destroy = true
     }
