@@ -566,7 +566,7 @@ resource "aws_instance" "control_node" {
     }
 
     user_data = templatefile("control_node.sh", {
-        PRIVATE_KEY = file("/ssh-code.pem")
+        PRIVATE_KEY = base64encode(file("/ssh-code.pem"))
     })
 
     tags = {

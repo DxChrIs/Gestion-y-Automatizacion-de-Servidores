@@ -17,10 +17,8 @@ git clone https://github.com/DxChrIs/Gestion-y-Automatizacion-de-Servidores.git
 cd Gestion-y-Automatizacion-de-Servidores
 
 #Obtener archvio clave
-cat <<EOF > ssh-code.pem
-${PRIVATE_KEY}
-EOF
-chmod 777 ssh-code.pem
+echo "${PRIVATE_KEY_B64}" | base64 -d > ssh-code.pem
+chmod 600 ssh-code.pem
 
 #Detectar direcciones IP de instancias VPC
 MY_IP=$(hostname -I | awk '{print $1}')
@@ -31,13 +29,18 @@ grep -v "$MY_IP" ip_list.txt > active_ips.txt
 for ip in $(cat active_ips.txt); do
     ports=$(nmap -p 80,3306 --open $ip | grep -E "80/tcp|3306/tcp")
 
-    if echo "$ports" | grep -q "80/tpc"; then
-        echo "$ip ansible_user=ubuntu ansible_ssh_private_key_file=ssh-code.pem" > web_server_host.ini
+    if echo "$ports" | grep -q "80/tcp"; then
+        echo "$ip ansible_user=ubuntu ansible_ssh_private_key_file=ssh-code.pem" >> web_server_host.ini
     elif echo "$ports" | grep -q "3306/tcp"; then
-        echo "$ip ansible_user=ubuntu ansible_ssh_private_key_file=ssh-code.pem" > sql_server_host.ini
+        echo "$ip ansible_user=ubuntu ansible_ssh_private_key_file=ssh-code.pem" >> sql_server_host.ini
     fi
 done
 
 #Ejecutar playbook
-ansible-playbook -i web_server_host.ini auto-config-web-server.yml
-ansible-playbook -i sql_server_host.ini auto-config-sql-server.yml
+if [ -f web_server_host.ini ]; then
+    ansible-playbook -i web_server_host.ini auto-config-web-server.yml
+fi
+
+if [ -f sql_server_host.ini ]; then
+    ansible-playbook -i sql_server_host.ini auto-config-sql-server.yml
+fi
