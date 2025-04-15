@@ -619,6 +619,7 @@ resource "aws_launch_template" "web_linux_template" {
         resource_type = "instance"
         tags = {
             Name = "web-linux-${local.instance_name}"
+            Role = "web"
         }
     }
 }
@@ -653,6 +654,7 @@ resource "aws_launch_template" "sql_linux_template" {
         resource_type = "instance"
         tags = {
             Name = "sql-linux-${local.instance_name}"
+            Role = "sql"
         }
     }
 }

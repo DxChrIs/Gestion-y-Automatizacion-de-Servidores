@@ -1,54 +1,48 @@
 #!/bin/bash
 
-#Instalacion de dependencias
+# Asegúrate de tener AWS CLI instalado y configurado
+apt-get install awscli -y
+
+# Configuración de AWS CLI
+aws configure set region us-east-1
+aws configure set output json
+
+# Actualización e instalación de dependencias
 apt-get update -y
 apt-get upgrade -y
-
-apt-get install software-properties-common -y
+apt-get install -y software-properties-common
 add-apt-repository --yes --update ppa:ansible/ansible
 apt-get install -y ansible
-
 apt-get install -y git
 apt-get install -y nmap
 
-#Clonar repositorio
+# Clonar el repositorio de Git
 cd /home/ubuntu
 git clone https://github.com/DxChrIs/Gestion-y-Automatizacion-de-Servidores.git
 cd Gestion-y-Automatizacion-de-Servidores
 
-#Detectar direcciones IP de instancias VPC
+# Detectar la IP local de la instancia
 MY_IP=$(hostname -I | awk '{print $1}')
-nmap -sn 10.0.0.0/24 -oG - | awk '/Up$/{print $2}' > ip_list.txt
-grep -v -e "$MY_IP" -e "10.0.0.0" -e "10.0.0.1" -e "10.0.0.2" ip_list.txt > active_ips.txt
 
+# Obtener IPs de las instancias EC2 con etiquetas específicas (web y sql)
+# Obtener IPs de las instancias con el tag 'Role: web'
+aws ec2 describe-instances --filters "Name=tag:Role,Values=web" --query "Reservations[*].Instances[*].PublicIpAddress" --output text > web_ips.txt
+
+# Obtener IPs de las instancias con el tag 'Role: sql'
+aws ec2 describe-instances --filters "Name=tag:Role,Values=sql" --query "Reservations[*].Instances[*].PublicIpAddress" --output text > sql_ips.txt
+
+# Combinar las IPs de web y sql en un solo archivo de inventario
+echo "[web]" > inventory.ini
+cat web_ips.txt >> inventory.ini
+
+echo "[sql]" >> inventory.ini
+cat sql_ips.txt >> inventory.ini
+
+# Filtrar la IP de la propia máquina (para no incluirla en el inventario)
+grep -v "$MY_IP" inventory.ini > temp_inventory.ini && mv temp_inventory.ini inventory.ini
+
+# Esperar 120 segundos (esto podría depender de tu caso específico)
+echo "Esperando 120 segundos..."
 sleep 120
 
-# Inicializar inventario
-echo "[web]" > hosts.ini
-web_found=false
-echo "[db]" >> hosts.ini
-db_found=false
-
-# Identificar y clasificar hosts
-for ip in $(cat active_ips.txt); do
-    ports=$(nmap -p 80,3306 --open $ip | grep -E "80/tcp|3306/tcp")
-
-    if echo "$ports" | grep -q "80/tcp"; then
-        sed -i '/^\[db\]/i'"$ip ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/ssh-code.pem"'' hosts.ini
-        web_found=true
-    fi
-
-    if echo "$ports" | grep -q "3306/tcp"; then
-        echo "$ip ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/ssh-code.pem" >> hosts.ini
-        db_found=true
-    fi
-done
-
-# Ejecutar playbooks por grupo
-if $web_found; then
-    ansible-playbook -i hosts.ini -l web auto-config-web-server.yml
-fi
-
-if $db_found; then
-    ansible-playbook -i hosts.ini -l db auto-config-sql-server.yml
-fi
+echo "Inventario creado exitosamente: inventory.ini"
