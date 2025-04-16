@@ -566,6 +566,8 @@ resource "aws_instance" "control_node" {
         encrypted   = true
     }
 
+    iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
+    
     user_data = base64encode(file("control_node.sh"))
 
     provisioner "file" {
@@ -595,6 +597,10 @@ resource "aws_launch_template" "web_linux_template" {
     instance_type = var.instance_type
     
     key_name      = var.key_name
+
+    iam_instance_profile {
+        name = aws_iam_instance_profile.ec2_instance_profile.name
+    }
 
     network_interfaces {
         associate_public_ip_address = true
@@ -630,6 +636,10 @@ resource "aws_launch_template" "sql_linux_template" {
     instance_type = var.instance_type
     
     key_name      = var.key_name
+
+    iam_instance_profile {
+        name = aws_iam_instance_profile.ec2_instance_profile.name
+    }
 
     network_interfaces {
         associate_public_ip_address = true
@@ -774,7 +784,7 @@ resource "aws_autoscaling_group" "sql_linux_asg" {
         value               = "sql"
         propagate_at_launch = true
     }
-    
+
     lifecycle {
         create_before_destroy = true
     }
@@ -947,4 +957,31 @@ resource "aws_cloudwatch_metric_alarm" "windows_scale_prevention" {
     dimensions = {
         AutoScalingGroupName = aws_autoscaling_group.windows_asg.name
     }
+}
+
+resource "aws_iam_role" "ec2_role" {
+    name = "ec2-readonly-role"
+
+    assume_role_policy = jsonencode({
+        Version = "2012-10-17"
+        Statement = [
+        {
+            Action = "sts:AssumeRole"
+            Effect = "Allow"
+            Principal = {
+            Service = "ec2.amazonaws.com"
+            }
+        }
+        ]
+    })
+}
+
+resource "aws_iam_role_policy_attachment" "ec2_readonly_policy" {
+    role       = aws_iam_role.ec2_role.name
+    policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
+}
+
+resource "aws_iam_instance_profile" "ec2_instance_profile" {
+    name = "ec2-instance-profile"
+    role = aws_iam_role.ec2_role.name
 }
