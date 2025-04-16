@@ -35,10 +35,10 @@ MY_IP=$(hostname -I | awk '{print $1}')
 
 # Obtener IPs de las instancias EC2 con etiquetas específicas (web y sql)
 # Obtener IPs de las instancias con el tag 'Role: web'
-aws ec2 describe-instances --filters "Name=tag:Role,Values=web" --query "Reservations[*].Instances[*].PublicIpAddress" --output text > web_ips.txt
+aws ec2 describe-instances --filters "Name=tag:Role,Values=web" --query "Reservations[*].Instances[*].PrivateIpAddress" --output text > web_ips.txt
 
 # Obtener IPs de las instancias con el tag 'Role: sql'
-aws ec2 describe-instances --filters "Name=tag:Role,Values=sql" --query "Reservations[*].Instances[*].PublicIpAddress" --output text > sql_ips.txt
+aws ec2 describe-instances --filters "Name=tag:Role,Values=sql" --query "Reservations[*].Instances[*].PrivateIpAddress" --output text > sql_ips.txt
 
 # Combinar las IPs de web y sql en un solo archivo de inventario
 echo "[web]" > inventory.ini
@@ -55,9 +55,9 @@ sleep 120
 
 # Ejecutar playbook correspondiente
 if [ "$ROLE" == "web" ]; then
-    ansible-playbook playbook_web.yml -i inventory.ini
+    ansible-playbook auto-config-web-server.yml -i inventory.ini
 elif [ "$ROLE" == "sql" ]; then
-    ansible-playbook playbook_sql.yml -i inventory.ini
+    ansible-playbook auto-config-sql-server.yml -i inventory.ini
 else
     echo "Rol no reconocido o no definido. No se ejecutará ningún playbook."
 fi
