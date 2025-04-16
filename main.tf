@@ -403,6 +403,7 @@ resource "aws_security_group" "linux_access" {
         Name = "sg-${local.instance_name}-linux"
     }
 }
+#-----------Linux Web Server----------
 resource "aws_security_group" "web_linux_access" {
     vpc_id      = aws_vpc.main.id
     name        = "web-linux-${var.region}-sg"
@@ -443,6 +444,7 @@ resource "aws_security_group" "web_linux_access" {
         Name = "web-sg-${local.instance_name}-linux"
     }
 }
+#-----------Linux SQL Server------------
 resource "aws_security_group" "sql_linux_access" {
     vpc_id      = aws_vpc.main.id
     name        = "sql-linux-${var.region}-sg"
@@ -483,6 +485,7 @@ resource "aws_security_group" "sql_linux_access" {
         Name = "sql-sg-${local.instance_name}-linux"
     }
 }
+#-----------Windows Control Node-----------
 resource "aws_security_group" "windows_access" {
     vpc_id      = aws_vpc.main.id
     name        = "windows-${var.region}-sg"
@@ -547,12 +550,207 @@ resource "aws_security_group" "windows_access" {
         Name = "sg-${local.instance_name}-windows"
     }
 }
+#------------Windows IIS Server------------
+resource "aws_security_group" "iis_windows_access" {
+    vpc_id      = aws_vpc.main.id
+    name        = "iis_windows-${var.region}-sg"
+    description = "Allow winRM, RDP, SSH, HTTPS, HTTP access"
+
+    ingress {
+        description = "WinRM access"
+        from_port   = 5985      # WinRM HTTP
+        to_port     = 5985
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "RDP access"
+        from_port   = 3389
+        to_port     = 3389
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "SSH access for Ansible playbooks"
+        from_port   = 22
+        to_port     = 22
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "HTTPS access"
+        from_port   = 443
+        to_port     = 443
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "HTTP access"
+        from_port   = 80
+        to_port     = 80
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "ICMP access"
+        from_port   = -1
+        to_port     = -1
+        protocol    = "icmp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    egress {
+        description = "Allow all outbound traffic"
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+    tags = {
+        Name = "iis-sg-${local.instance_name}-windows"
+    }
+}
+#------------Windows AD Server-------------
+resource "aws_security_group" "ad_windows_access" {
+    vpc_id      = aws_vpc.main.id
+    name        = "ad-windows-${var.region}-sg"
+    description = "Allow winRM, RDP, SSH, HTTPS, HTTP access"
+
+    ingress {
+        description = "WinRM access"
+        from_port   = 5985      # WinRM HTTP
+        to_port     = 5985
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "RDP access"
+        from_port   = 3389
+        to_port     = 3389
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "SSH access for Ansible playbooks"
+        from_port   = 22
+        to_port     = 22
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "HTTPS access"
+        from_port   = 443
+        to_port     = 443
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "HTTP access"
+        from_port   = 80
+        to_port     = 80
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "ICMP access"
+        from_port   = -1
+        to_port     = -1
+        protocol    = "icmp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    egress {
+        description = "Allow all outbound traffic"
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+    tags = {
+        Name = "ad-sg-${local.instance_name}-windows"
+    }
+}
+#-----------Windows File Server-------------
+resource "aws_security_group" "file_windows_access" {
+    vpc_id      = aws_vpc.main.id
+    name        = "file-windows-${var.region}-sg"
+    description = "Allow winRM, RDP, SSH, HTTPS, HTTP access"
+
+    ingress {
+        description = "WinRM access"
+        from_port   = 5985      # WinRM HTTP
+        to_port     = 5985
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "RDP access"
+        from_port   = 3389
+        to_port     = 3389
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "SSH access for Ansible playbooks"
+        from_port   = 22
+        to_port     = 22
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "HTTPS access"
+        from_port   = 443
+        to_port     = 443
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "HTTP access"
+        from_port   = 80
+        to_port     = 80
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "ICMP access"
+        from_port   = -1
+        to_port     = -1
+        protocol    = "icmp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    egress {
+        description = "Allow all outbound traffic"
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+    tags = {
+        Name = "file-sg-${local.instance_name}-windows"
+    }
+}
 
 #############################################
 #              Instance EC2                 #
 #############################################
 #-----------Linux Control node---------------
-resource "aws_instance" "control_node" {
+resource "aws_instance" "linux_control_node" {
     ami = var.linux_ami
     instance_type = var.instance_type
     key_name = var.key_name
@@ -568,7 +766,7 @@ resource "aws_instance" "control_node" {
 
     iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
     
-    user_data = base64encode(file("control_node.sh"))
+    user_data = base64encode(file("linux_control_node.sh"))
 
     provisioner "file" {
         source = "./ssh-code.pem"
@@ -583,11 +781,11 @@ resource "aws_instance" "control_node" {
         type = "ssh"
         user = "ubuntu"
         private_key = file("./ssh-code.pem")
-        host = aws_instance.control_node.public_ip
+        host = aws_instance.linux_control_node.public_ip
     }
 
     tags = {
-        Name = "control-node-${local.instance_name}"
+        Name = "linux-control-node-${local.instance_name}"
     }
 }
 #-------------Linux web server---------------
@@ -668,16 +866,59 @@ resource "aws_launch_template" "sql_linux_template" {
         }
     }
 }
-resource "aws_launch_template" "windows_template" {
-    name_prefix   = "windows-template-"
+#-----------Windows Control Node------------
+resource "aws_instance" "windows_control_node" {
+    ami = var.linux_ami
+    instance_type = var.instance_type
+    key_name = var.key_name
+    subnet_id = aws_subnet.public_subnet2.id
+    security_groups = [aws_security_group.windows_access.id]
+    associate_public_ip_address = true
+
+    root_block_device {
+        volume_size = 20
+        volume_type = "gp2"
+        encrypted   = true
+    }
+
+    iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
+    
+    user_data = base64encode(file("windows_control_node.sh"))
+
+    provisioner "file" {
+        source = "./ssh-code.pem"
+        destination = "/home/ubuntu/ssh-code.pem"
+    }
+
+    provisioner "remote-exec" {
+        inline = ["chmod 400 /home/ubuntu/ssh-code.pem"]
+    }
+
+    connection {
+        type = "ssh"
+        user = "ubuntu"
+        private_key = file("./ssh-code.pem")
+        host = aws_instance.windows_control_node.public_ip
+    }
+
+    tags = {
+        Name = "windows-control-node-${local.instance_name}"
+    }
+}
+#-------------Windows IIS Server--------------
+resource "aws_launch_template" "iis_windows_template" {
+    name_prefix   = "iis-windows-template-"
     image_id      = var.windows_ami
     instance_type = var.instance_type
     
     key_name      = var.key_name
 
+    iam_instance_profile {
+        name = aws_iam_instance_profile.ec2_instance_profile.name
+    }
     network_interfaces {
         associate_public_ip_address = true
-        security_groups             = [aws_security_group.windows_access.id]
+        security_groups             = [aws_security_group.iis_windows_access.id]
     }
 
     monitoring {
@@ -704,6 +945,103 @@ resource "aws_launch_template" "windows_template" {
         resource_type = "instance"
         tags = {
             Name = "windows-${local.instance_name}"
+            Role = "iis"
+        }
+    }
+
+    lifecycle {
+        create_before_destroy = true
+    }
+}
+#---------Windows Active Directory-----------
+resource "aws_launch_template" "ad_windows_template" {
+    name_prefix   = "ad-windows-template-"
+    image_id      = var.windows_ami
+    instance_type = var.instance_type
+    
+    key_name      = var.key_name
+
+    iam_instance_profile {
+        name = aws_iam_instance_profile.ec2_instance_profile.name
+    }
+    network_interfaces {
+        associate_public_ip_address = true
+        security_groups             = [aws_security_group.ad_windows_access.id]
+    }
+
+    monitoring {
+        enabled = true
+    }
+
+    block_device_mappings {
+        device_name = "/dev/sda1"
+        ebs {
+            volume_size = 30
+            volume_type = "gp2"
+            encrypted   = true
+        }
+    }
+
+    user_data = base64encode(<<-EOF
+        <powershell>
+        $(file("arranque_windows.ps1"))
+        </powershell>
+        EOF
+        )
+
+    tag_specifications {
+        resource_type = "instance"
+        tags = {
+            Name = "windows-${local.instance_name}"
+            Role = "ad"
+        }
+    }
+
+    lifecycle {
+        create_before_destroy = true
+    }
+}
+#---------Windows File Server-----------
+resource "aws_launch_template" "file_windows_template" {
+    name_prefix   = "file-windows-template-"
+    image_id      = var.windows_ami
+    instance_type = var.instance_type
+    
+    key_name      = var.key_name
+
+    iam_instance_profile {
+        name = aws_iam_instance_profile.ec2_instance_profile.name
+    }
+    network_interfaces {
+        associate_public_ip_address = true
+        security_groups             = [aws_security_group.file_windows_access.id]
+    }
+
+    monitoring {
+        enabled = true
+    }
+
+    block_device_mappings {
+        device_name = "/dev/sda1"
+        ebs {
+            volume_size = 30
+            volume_type = "gp2"
+            encrypted   = true
+        }
+    }
+
+    user_data = base64encode(<<-EOF
+        <powershell>
+        $(file("arranque_windows.ps1"))
+        </powershell>
+        EOF
+        )
+
+    tag_specifications {
+        resource_type = "instance"
+        tags = {
+            Name = "windows-${local.instance_name}"
+            Role = "file"
         }
     }
 
@@ -749,7 +1087,7 @@ resource "aws_autoscaling_group" "web_linux_asg" {
     }
 }
 resource "aws_autoscaling_policy" "web_lin_scale_up" {
-    name                   = "web-lin-scale-up-${local.instance_name}"
+    name                   = "web-lin-scale-up-${var.region}"
     autoscaling_group_name = aws_autoscaling_group.web_linux_asg.name
     scaling_adjustment     = 1
     adjustment_type        = "ChangeInCapacity"
@@ -790,14 +1128,15 @@ resource "aws_autoscaling_group" "sql_linux_asg" {
     }
 }
 resource "aws_autoscaling_policy" "sql_lin_scale_up" {
-    name                   = "sql_lin-scale-up-${local.instance_name}"
+    name                   = "sql_lin-scale-up-${var.region}"
     autoscaling_group_name = aws_autoscaling_group.sql_linux_asg.name
     scaling_adjustment     = 1
     adjustment_type        = "ChangeInCapacity"
     cooldown               = 300
 }
-resource "aws_autoscaling_group" "windows_asg" {
-    name                = "windows-asg-${local.instance_name}"
+#------------Windows IIS Server------------
+resource "aws_autoscaling_group" "iis_windows_asg" {
+    name                = "iis-windows-asg-${local.instance_name}"
 
     desired_capacity    = 1
     max_size            = 3
@@ -809,13 +1148,19 @@ resource "aws_autoscaling_group" "windows_asg" {
     vpc_zone_identifier = [aws_subnet.public_subnet2.id]
 
     launch_template {
-        id      = aws_launch_template.windows_template.id
+        id      = aws_launch_template.iis_windows_template.id
         version = "$Latest"
     }
 
     tag {
         key                 = "Name"
-        value               = "windows-${local.instance_name}"
+        value               = "iis-windows-${local.instance_name}"
+        propagate_at_launch = true
+    }
+    
+    tag {
+        key                 = "Role"
+        value               = "iis"
         propagate_at_launch = true
     }
 
@@ -823,9 +1168,91 @@ resource "aws_autoscaling_group" "windows_asg" {
         create_before_destroy = true
     }
 }
-resource "aws_autoscaling_policy" "win_scale_up" {
-    name                   = "win-scale-up-${local.instance_name}"
-    autoscaling_group_name = aws_autoscaling_group.windows_asg.name
+resource "aws_autoscaling_policy" "iis_win_scale_up" {
+    name                   = "iis-win-scale-up-${var.region}"
+    autoscaling_group_name = aws_autoscaling_group.iis_windows_asg.name
+    scaling_adjustment     = 1
+    adjustment_type        = "ChangeInCapacity"
+    cooldown               = 300
+}
+#---------Windows AD Server------------
+resource "aws_autoscaling_group" "ad_windows_asg" {
+    name                = "ad-windows-asg-${local.instance_name}"
+
+    desired_capacity    = 1
+    max_size            = 3
+    min_size            = 1
+
+    health_check_type   = "EC2"
+    health_check_grace_period = 300
+
+    vpc_zone_identifier = [aws_subnet.public_subnet2.id]
+
+    launch_template {
+        id      = aws_launch_template.ad_windows_template.id
+        version = "$Latest"
+    }
+
+    tag {
+        key                 = "Name"
+        value               = "ad-windows-${local.instance_name}"
+        propagate_at_launch = true
+    }
+    
+    tag {
+        key                 = "Role"
+        value               = "ad"
+        propagate_at_launch = true
+    }
+
+    lifecycle {
+        create_before_destroy = true
+    }
+}
+resource "aws_autoscaling_policy" "ad_win_scale_up" {
+    name                   = "ad-win-scale-up-${var.region}"
+    autoscaling_group_name = aws_autoscaling_group.ad_windows_asg.name
+    scaling_adjustment     = 1
+    adjustment_type        = "ChangeInCapacity"
+    cooldown               = 300
+}
+#------------Windows File Server-------------
+resource "aws_autoscaling_group" "file_windows_asg" {
+    name                = "file-windows-asg-${local.instance_name}"
+
+    desired_capacity    = 1
+    max_size            = 3
+    min_size            = 1
+
+    health_check_type   = "EC2"
+    health_check_grace_period = 300
+
+    vpc_zone_identifier = [aws_subnet.public_subnet2.id]
+
+    launch_template {
+        id      = aws_launch_template.file_windows_template.id
+        version = "$Latest"
+    }
+
+    tag {
+        key                 = "Name"
+        value               = "file-windows-${local.instance_name}"
+        propagate_at_launch = true
+    }
+    
+    tag {
+        key                 = "Role"
+        value               = "file"
+        propagate_at_launch = true
+    }
+
+    lifecycle {
+        create_before_destroy = true
+    }
+}
+resource "aws_autoscaling_policy" "file_win_scale_up" {
+    name                   = "file-win-scale-up-${var.region}"
+    autoscaling_group_name = aws_autoscaling_group.file_windows_asg.name
     scaling_adjustment     = 1
     adjustment_type        = "ChangeInCapacity"
     cooldown               = 300
@@ -942,10 +1369,11 @@ resource "aws_cloudwatch_metric_alarm" "sql_linux_scale_prevention" {
         AutoScalingGroupName = aws_autoscaling_group.sql_linux_asg.name
     }
 }
-resource "aws_cloudwatch_metric_alarm" "windows_scale_prevention" {
+#-----------Windows IIS Server-------------
+resource "aws_cloudwatch_metric_alarm" "iis_windows_scale_prevention" {
     alarm_description   = "Monitoring CPU utilization"
-    alarm_actions       = [aws_autoscaling_policy.win_scale_up.arn]
-    alarm_name          = "Win-CPU-Scale-Up-${local.instance_name}"
+    alarm_actions       = [aws_autoscaling_policy.iis_win_scale_up.arn]
+    alarm_name          = "IIS-Win-CPU-Scale-Up-${local.instance_name}"
     comparison_operator = "GreaterThanThreshold"
     namespace           = "AWS/EC2"
     evaluation_periods  = 2
@@ -955,10 +1383,46 @@ resource "aws_cloudwatch_metric_alarm" "windows_scale_prevention" {
     statistic           = "Average"
 
     dimensions = {
-        AutoScalingGroupName = aws_autoscaling_group.windows_asg.name
+        AutoScalingGroupName = aws_autoscaling_group.iis_windows_asg.name
     }
 }
+#----------Windows AD Server-------------
+resource "aws_cloudwatch_metric_alarm" "ad_windows_scale_prevention" {
+    alarm_description   = "Monitoring CPU utilization"
+    alarm_actions       = [aws_autoscaling_policy.ad_win_scale_up.arn]
+    alarm_name          = "AD-Win-CPU-Scale-Up-${local.instance_name}"
+    comparison_operator = "GreaterThanThreshold"
+    namespace           = "AWS/EC2"
+    evaluation_periods  = 2
+    metric_name         = "CPUUtilization"
+    threshold           = 80
+    period              = 120
+    statistic           = "Average"
 
+    dimensions = {
+        AutoScalingGroupName = aws_autoscaling_group.ad_windows_asg.name
+    }
+}
+#-----------Windows File Server-----------
+resource "aws_cloudwatch_metric_alarm" "file_windows_scale_prevention" {
+    alarm_description   = "Monitoring CPU utilization"
+    alarm_actions       = [aws_autoscaling_policy.file_win_scale_up.arn]
+    alarm_name          = "File-Win-CPU-Scale-Up-${local.instance_name}"
+    comparison_operator = "GreaterThanThreshold"
+    namespace           = "AWS/EC2"
+    evaluation_periods  = 2
+    metric_name         = "CPUUtilization"
+    threshold           = 80
+    period              = 120
+    statistic           = "Average"
+
+    dimensions = {
+        AutoScalingGroupName = aws_autoscaling_group.file_windows_asg.name
+    }
+}
+###############################################
+#                 IAM Policy                  #
+###############################################
 resource "aws_iam_role" "ec2_role" {
     name = "ec2-readonly-role"
 

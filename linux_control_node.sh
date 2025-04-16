@@ -51,7 +51,7 @@ grep -v "$MY_IP" sql_ips.txt | while read ip; do
     echo "$ip ansible_user=ubuntu ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_private_key_file=/home/ubuntu/ssh-code.pem" >> inventory_sql.ini
 done
 
-# Esperar 120 segundos (esto podría depender de tu caso específico)
+# Esperar 60 segundos (esto podría depender de tu caso específico)
 sleep 60
 
 # Ejecutar playbook correspondiente
