@@ -42,26 +42,23 @@ aws ec2 describe-instances --filters "Name=tag:Role,Values=sql" --query "Reserva
 
 # Combinar las IPs de web y sql en un solo archivo de inventario
 echo "[web]" > inventory_web.ini
-cat web_ips.txt >> inventory_web.ini
+grep -v "$MY_IP" web_ips.txt | while read ip; do
+    echo "$ip ansible_user=ubuntu ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_private_key_file=/home/ubuntu/ssh-code.pem" >> inventory_web.ini
+done
 
-echo "[sql]" >> inventory_sql.ini
-cat sql_ips.txt >> inventory_sql.ini
-
-# Filtrar la IP de la propia máquina (para no incluirla en el inventario)
-grep -v "$MY_IP" inventory_web.ini > temp_inventory.ini && mv temp_inventory.ini inventory_web.ini
-
-sleep 30
-
-grep -v "$MY_IP" inventory_sql.ini > temp_inventory.ini && mv temp_inventory.ini inventory_sql.ini
+echo "[sql]" > inventory_sql.ini
+grep -v "$MY_IP" sql_ips.txt | while read ip; do
+    echo "$ip ansible_user=ubuntu ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_private_key_file=/home/ubuntu/ssh-code.pem" >> inventory_sql.ini
+done
 
 # Esperar 120 segundos (esto podría depender de tu caso específico)
 sleep 120
 
 # Ejecutar playbook correspondiente
 if [ "$ROLE" == "web" ]; then
-    ansible-playbook -i inventory_web.ini auto-config-web-server.yml --private-key /home/ubuntu/ssh-code.pem -e ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+    ansible-playbook -i inventory_web.ini auto-config-web-server.yml
 elif [ "$ROLE" == "sql" ]; then
-    ansible-playbook -i inventory_sql.ini auto-config-sql-server.yml --private-key /home/ubuntu/ssh-code.pem -e ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+    ansible-playbook -i inventory_sql.ini auto-config-sql-server.yml
 else
     echo "Rol no reconocido o no definido. No se ejecutará ningún playbook."
 fi
