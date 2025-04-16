@@ -52,7 +52,7 @@ grep -v "$MY_IP" sql_ips.txt | while read ip; do
 done
 
 # Esperar 120 segundos (esto podría depender de tu caso específico)
-sleep 120
+sleep 60
 
 # Ejecutar playbook correspondiente
 ansible-playbook -i inventory_web.ini auto-config-web-server.yml
