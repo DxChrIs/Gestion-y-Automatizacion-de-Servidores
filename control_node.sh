@@ -55,10 +55,6 @@ done
 sleep 120
 
 # Ejecutar playbook correspondiente
-if [ "$ROLE" == "web" ]; then
-    ansible-playbook -i inventory_web.ini auto-config-web-server.yml
-elif [ "$ROLE" == "sql" ]; then
-    ansible-playbook -i inventory_sql.ini auto-config-sql-server.yml
-else
-    echo "Rol no reconocido o no definido. No se ejecutará ningún playbook."
-fi
+ansible-playbook -i inventory_web.ini auto-config-web-server.yml
+
+ansible-playbook -i inventory_sql.ini auto-config-sql-server.yml
