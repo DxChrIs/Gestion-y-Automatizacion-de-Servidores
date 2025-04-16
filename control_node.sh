@@ -41,23 +41,27 @@ aws ec2 describe-instances --filters "Name=tag:Role,Values=web" --query "Reserva
 aws ec2 describe-instances --filters "Name=tag:Role,Values=sql" --query "Reservations[*].Instances[*].PrivateIpAddress" --output text > sql_ips.txt
 
 # Combinar las IPs de web y sql en un solo archivo de inventario
-echo "[web]" > inventory.ini
-cat web_ips.txt >> inventory.ini
+echo "[web]" > inventory_web.ini
+cat web_ips.txt >> inventory_web.ini
 
-echo "[sql]" >> inventory.ini
-cat sql_ips.txt >> inventory.ini
+echo "[sql]" >> inventory_sql.ini
+cat sql_ips.txt >> inventory_sql.ini
 
 # Filtrar la IP de la propia máquina (para no incluirla en el inventario)
-grep -v "$MY_IP" inventory.ini > temp_inventory.ini && mv temp_inventory.ini inventory.ini
+grep -v "$MY_IP" inventory_web.ini > temp_inventory.ini && mv temp_inventory.ini inventory_web.ini
+
+sleep 30
+
+grep -v "$MY_IP" inventory_sql.ini > temp_inventory.ini && mv temp_inventory.ini inventory_sql.ini
 
 # Esperar 120 segundos (esto podría depender de tu caso específico)
 sleep 120
 
 # Ejecutar playbook correspondiente
 if [ "$ROLE" == "web" ]; then
-    ansible-playbook auto-config-web-server.yml -i inventory.ini
+    ansible-playbook -i inventory_web.ini auto-config-web-server.yml --private-key /home/ubuntu/ssh-code.pem
 elif [ "$ROLE" == "sql" ]; then
-    ansible-playbook auto-config-sql-server.yml -i inventory.ini
+    ansible-playbook -i inventory_sql.ini auto-config-sql-server.yml --private-key /home/ubuntu/ssh-code.pem
 else
     echo "Rol no reconocido o no definido. No se ejecutará ningún playbook."
 fi
