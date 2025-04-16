@@ -20,11 +20,6 @@ aws configure set output json
 # Obtener el ID de la instancia
 INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
 
-# Obtener el rol (web/sql) desde las etiquetas
-ROLE=$(aws ec2 describe-tags \
-    --filters "Name=resource-id,Values=$INSTANCE_ID" "Name=key,Values=Role" \
-    --query "Tags[0].Value" --output text)
-
 # Clonar el repositorio de Git
 cd /home/ubuntu
 git clone https://github.com/DxChrIs/Gestion-y-Automatizacion-de-Servidores.git
