@@ -1,5 +1,5 @@
 #!/bin/bash
-sudo su
+
 # Actualización e instalación de dependencias
 apt-get update -y
 apt-get upgrade -y
@@ -11,7 +11,7 @@ apt-get install -y nmap
 apt-get install -y jq
 
 # Asegúrate de tener AWS CLI instalado y configurado
-snap install aws-cli --classic
+sudo snap install aws-cli --classic
 
 # Configuración de AWS CLI
 aws configure set region us-east-1
@@ -59,9 +59,9 @@ sleep 120
 
 # Ejecutar playbook correspondiente
 if [ "$ROLE" == "web" ]; then
-    ansible-playbook -i inventory_web.ini auto-config-web-server.yml --private-key /home/ubuntu/ssh-code.pem
+    ansible-playbook -i inventory_web.ini auto-config-web-server.yml --private-key /home/ubuntu/ssh-code.pem -e ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 elif [ "$ROLE" == "sql" ]; then
-    ansible-playbook -i inventory_sql.ini auto-config-sql-server.yml --private-key /home/ubuntu/ssh-code.pem
+    ansible-playbook -i inventory_sql.ini auto-config-sql-server.yml --private-key /home/ubuntu/ssh-code.pem -e ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 else
     echo "Rol no reconocido o no definido. No se ejecutará ningún playbook."
 fi
