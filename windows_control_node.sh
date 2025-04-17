@@ -25,10 +25,44 @@ cd Gestion-y-Automatizacion-de-Servidores
 
 # Obtener el ID de la instancia
 INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+PEM_KEY_PATH="/home/ubuntu/ssh-code.pem"
+
 # Detectar la IP local de la instancia
 MY_IP=$(hostname -I | awk '{print $1}')
 
-# Obtener IPs de las instancias EC2 con etiquetas específicas (web, ad, file)
+# Obtener la ID de la instancia IIS (puedes hacer esto con AD y FILE igual)
+INSTANCE_ID_IIS=$(aws ec2 describe-instances --filters "Name=tag:Role,Values=iis" \
+  --query "Reservations[0].Instances[0].InstanceId" --output text)
+
+INSTANCE_ID_AD=$(aws ec2 describe-instances --filters "Name=tag:Role,Values=ad" \
+  --query "Reservations[0].Instances[0].InstanceId" --output text)
+
+INSTANCE_ID_FILE=$(aws ec2 describe-instances --filters "Name=tag:Role,Values=file" \
+  --query "Reservations[0].Instances[0].InstanceId" --output text)
+
+# Esperar a que Windows esté listo para devolver la contraseña (se toma unos minutos)
+sleep 300
+
+# Obtener la contraseña de administrador usando AWS CLI y OpenSSL
+ADMIN_PASSWORD_IIS=$(aws ec2 get-password-data \
+  --instance-id "$INSTANCE_ID_IIS" \
+  --priv-launch-key "$PEM_KEY_PATH" \
+  --query 'PasswordData' \
+  --output text)
+
+ADMIN_PASSWORD_AD=$(aws ec2 get-password-data \
+  --instance-id "$INSTANCE_ID_AD" \
+  --priv-launch-key "$PEM_KEY_PATH" \
+  --query 'PasswordData' \
+  --output text)
+
+ADMIN_PASSWORD_FILE=$(aws ec2 get-password-data \
+  --instance-id "$INSTANCE_ID_FILE" \
+  --priv-launch-key "$PEM_KEY_PATH" \
+  --query 'PasswordData' \
+  --output text)
+
+# Obtener IPs de las instancias EC2 con etiquetas específicas (iis, ad, file)
 #IIS
 aws ec2 describe-instances --filters "Name=tag:Role,Values=iis" --query "Reservations[*].Instances[*].PrivateDnsName" --output text > iis_ips.txt
 
@@ -48,7 +82,7 @@ cat <<EOL >> inventory_iis.ini
 
 [windows:vars]
 ansible_user=Administrator
-ansible_password="ElAdmin12345"
+ansible_password=$ADMIN_PASSWORD_IIS
 ansible_port=5985
 ansible_connection=winrm
 ansible_winrm_transport=basic
@@ -61,7 +95,7 @@ cat <<EOL >> inventory_ad.ini
 
 [windows:vars]
 ansible_user=Administrator
-ansible_password="ElAdmin12345"
+ansible_password=$ADMIN_PASSWORD_AD
 ansible_port=5985
 ansible_connection=winrm
 ansible_winrm_transport=basic
@@ -74,7 +108,7 @@ cat <<EOL >> inventory_file.ini
 
 [windows:vars]
 ansible_user=Administrator
-ansible_password="ElAdmin12345"
+ansible_password=$ADMIN_PASSWORD_FILE
 ansible_port=5985
 ansible_connection=winrm
 ansible_winrm_transport=basic
@@ -83,8 +117,8 @@ ansible_winrm_scheme=http
 ansible_winrm_kerberos_delegation=true
 EOL
 
-#Wait 120 seconds
-sleep 120
+#Wait 300 seconds
+sleep 300
 
 # === Ejecutar playbook según el rol ===
 ansible-playbook -i inventory_iis.ini auto-config-windows-iis.yml
