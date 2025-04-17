@@ -10,26 +10,13 @@ Set-Item -Path WSMan:\localhost\Service\Auth\Basic -Value $true
 Set-Item -Path WSMan:\localhost\Service\AllowUnencrypted -Value $true
 Set-Item -Path WSMan:\localhost\Service\Auth\CredSSP -Value $true
 
-#Create a self-signed certificate for WinRM
-$cert = New-SelfSignedCertificate -DnsName $(Invoke-RestMethod -Uri http://169.254.169.254/latest/meta-data/public-hostname) 
--CertStoreLocation "cert:\LocalMachine\My"
-winrm create winrm/config/Listener?Address=*+Transport=HTTPS "@{Hostname=`"$(Invoke-RestMethod -Uri 
-http://169.254.169.254/latest/meta-data/public-hostname)`";CertificateThumbprint=`"$($cert.Thumbprint)`"}"
-
-
 #Create a Firewall rule to allow WinRM HTTP inbound traffic
-New-NetFirewallRule -DisplayName "Allow WinRM HTTPS" -Direction Inbound -LocalPort 5986 -Protocol TCP -Action Allow
+New-NetFirewallRule -DisplayName "Allow WinRM HTTP" -Direction Inbound -LocalPort 5985 -Protocol TCP -Action Allow
 New-NetFirewallRule -DisplayName "Allow ICMPv4-In" -Protocol ICMPv4 -IcmpType 8 -Direction Inbound -Action Allow
 New-NetFirewallRule -DisplayName "Allow ICMPv6-In" -Protocol ICMPv6 -IcmpType 128 -Direction Inbound -Action Allow
 
 #Configure TrustedHosts
 Set-Item WSMan:\localhost\Client\TrustedHosts -Value "*" -Force
-
-#Set localAccountTokenFilterPolicy
-New-ItemProperty -Name LocalAccountTokenFilterPolicy -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -PropertyType DWord -Value 1 -Force
-
-#Set Execution Policy to Unrestricted
-Set-ExecutionPolicy Unrestricted -Force
 
 #Restart WinRM service to apply changes
 Restart-Service WinRM

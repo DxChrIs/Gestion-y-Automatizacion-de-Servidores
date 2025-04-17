@@ -41,7 +41,7 @@ INSTANCE_ID_FILE=$(aws ec2 describe-instances --filters "Name=tag:Role,Values=fi
   --query "Reservations[0].Instances[0].InstanceId" --output text)
 
 # Esperar a que Windows esté listo para devolver la contraseña (se toma unos minutos)
-sleep 300
+sleep 420
 
 # Obtener la contraseña de administrador usando AWS CLI y OpenSSL
 ADMIN_PASSWORD_IIS=$(aws ec2 get-password-data \
@@ -55,8 +55,6 @@ ADMIN_PASSWORD_AD=$(aws ec2 get-password-data \
   --priv-launch-key "$PEM_KEY_PATH" \
   --query 'PasswordData' \
   --output text)
-
-sleep 240
 
 ADMIN_PASSWORD_FILE=$(aws ec2 get-password-data \
   --instance-id "$INSTANCE_ID_FILE" \
@@ -85,10 +83,10 @@ cat <<EOL >> inventory_iis.ini
 [windows:vars]
 ansible_user=Administrator
 ansible_password="$ADMIN_PASSWORD_IIS"
-ansible_port=5986
+ansible_port=5985
 ansible_connection=winrm
 ansible_winrm_server_cert_validation=ignore
-ansible_winrm_scheme=https
+ansible_winrm_scheme=http
 ansible_winrm_kerberos_delegation=true
 EOL
 
@@ -117,9 +115,6 @@ ansible_winrm_server_cert_validation=ignore
 ansible_winrm_scheme=http
 ansible_winrm_kerberos_delegation=true
 EOL
-
-#Wait 300 seconds
-sleep 300
 
 # === Ejecutar playbook según el rol ===
 ansible-playbook -i inventory_iis.ini auto-config-windows-iis.yml
