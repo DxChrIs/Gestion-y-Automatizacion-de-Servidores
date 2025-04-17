@@ -936,7 +936,7 @@ resource "aws_launch_template" "iis_windows_template" {
 
     user_data = base64encode(<<-EOF
         <powershell>
-        $(file("arranque_windows.ps1"))
+        $(file("iis_server_windows.ps1"))
         </powershell>
         EOF
         )
@@ -984,7 +984,7 @@ resource "aws_launch_template" "ad_windows_template" {
 
     user_data = base64encode(<<-EOF
         <powershell>
-        $(file("arranque_windows.ps1"))
+        $(file("ad_server_windows.ps1"))
         </powershell>
         EOF
         )
@@ -1032,7 +1032,7 @@ resource "aws_launch_template" "file_windows_template" {
 
     user_data = base64encode(<<-EOF
         <powershell>
-        $(file("arranque_windows.ps1"))
+        $(file("file_server_windows.ps1"))
         </powershell>
         EOF
         )

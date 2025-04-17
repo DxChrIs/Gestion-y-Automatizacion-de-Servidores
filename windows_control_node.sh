@@ -30,19 +30,21 @@ MY_IP=$(hostname -I | awk '{print $1}')
 
 # Obtener IPs de las instancias EC2 con etiquetas específicas (web, ad, file)
 #IIS
-aws ec2 describe-instances --filters "Name=tag:Role,Values=iis" --query "Reservations[*].Instances[*].PrivateIpAddress" --output text > iis_ips.txt
+aws ec2 describe-instances --filters "Name=tag:Role,Values=iis" --query "Reservations[*].Instances[*].PrivateDnsName" --output text > iis_ips.txt
 
 #AD
-aws ec2 describe-instances --filters "Name=tag:Role,Values=ad" --query "Reservations[*].Instances[*].PrivateIpAddress" --output text > ad_ips.txt
+aws ec2 describe-instances --filters "Name=tag:Role,Values=ad" --query "Reservations[*].Instances[*].PrivateDnsName" --output text > ad_ips.txt
 
 #File
-aws ec2 describe-instances --filters "Name=tag:Role,Values=file" --query "Reservations[*].Instances[*].PrivateIpAddress" --output text > file_ips.txt
+aws ec2 describe-instances --filters "Name=tag:Role,Values=file" --query "Reservations[*].Instances[*].PrivateDnsName" --output text > file_ips.txt
 
 # === Crear archivo de inventario Windows para Ansible + WinRM ===
-echo "[windows]" > inventory_windows.ini
-cat iis_ips.txt ad_ips.txt file_ips.txt | grep -v "$MY_IP" >> inventory_windows.ini
+echo "[windows]" > inventory_iis.ini; echo "[windows]" > inventory_ad.ini; echo "[windows]" > inventory_file.ini
+cat iis_ips.txt | grep -v "$MY_IP" >> inventory_iis.ini
+cat ad_ips.txt | grep -v "$MY_IP" >> inventory_ad.ini
+cat file_ips.txt | grep -v "$MY_IP" >> inventory_file.ini
 
-cat <<EOL >> inventory_windows.ini
+cat <<EOL >> inventory_iis.ini
 
 [windows:vars]
 ansible_user=Administrator
@@ -51,28 +53,42 @@ ansible_port=5985
 ansible_connection=winrm
 ansible_winrm_transport=basic
 ansible_winrm_server_cert_validation=ignore
+ansible_winrm_scheme=http
+ansible_winrm_kerberos_delegation=true
 EOL
 
-# === Obtener el rol actual desde la instancia ===
-ROLE=$(aws ec2 describe-tags \
-  --filters "Name=resource-id,Values=$INSTANCE_ID" "Name=key,Values=Role" \
-  --query "Tags[0].Value" --output text)
+cat <<EOL >> inventory_ad.ini
+
+[windows:vars]
+ansible_user=Administrator
+ansible_password=Chris1853
+ansible_port=5985
+ansible_connection=winrm
+ansible_winrm_transport=basic
+ansible_winrm_server_cert_validation=ignore
+ansible_winrm_scheme=http
+ansible_winrm_kerberos_delegation=true
+EOL
+
+cat <<EOL >> inventory_file.ini
+
+[windows:vars]
+ansible_user=Administrator
+ansible_password=Chris1853
+ansible_port=5985
+ansible_connection=winrm
+ansible_winrm_transport=basic
+ansible_winrm_server_cert_validation=ignore
+ansible_winrm_scheme=http
+ansible_winrm_kerberos_delegation=true
+EOL
+
+#Wait 120 seconds
+sleep 120
 
 # === Ejecutar playbook según el rol ===
-case "$ROLE" in
-  "iis")
-    echo "Iniciando configuración para servidor IIS..."
-    ansible-playbook -i inventory_windows.ini windows-iis.yml
-    ;;
-  "ad")
-    echo "Iniciando configuración para Active Directory..."
-    ansible-playbook -i inventory_windows.ini windows-ad.yml
-    ;;
-  "file")
-    echo "Iniciando configuración para File Server..."
-    ansible-playbook -i inventory_windows.ini windows-file-server.yml
-    ;;
-  *)
-    echo "Rol no reconocido o no definido. No se ejecutará ningún playbook."
-    ;;
-esac
+ansible-playbook -i inventory_iis.ini auto-config-windows-iis.yml
+
+ansible-playbook -i inventory_ad.ini auto-config-windows-ad.yml
+
+ansible-playbook -i inventory_file.ini auto-config-windows-file-server.yml

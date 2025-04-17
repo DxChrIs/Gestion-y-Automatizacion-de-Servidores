@@ -16,7 +16,7 @@ variable "linux_ami" {
 variable "windows_ami" {
     description = "The AMI ID to use for the EC2 instance"
     type        = string
-    default     = "ami-05f08ad7b78afd8cd" # Windows Server 2019 Base
+    default     = "ami-0c765d44cf1f25d26" # Windows Server 2022 Base
 }
 variable "key_name" {
     description = "The name of the key pair to use for SSH access to the instance"
