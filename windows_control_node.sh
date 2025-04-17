@@ -48,7 +48,7 @@ cat <<EOL >> inventory_iis.ini
 
 [windows:vars]
 ansible_user=Administrator
-ansible_password=Chris1853
+ansible_password="ElAdmin12345"
 ansible_port=5985
 ansible_connection=winrm
 ansible_winrm_transport=basic
@@ -61,7 +61,7 @@ cat <<EOL >> inventory_ad.ini
 
 [windows:vars]
 ansible_user=Administrator
-ansible_password=Chris1853
+ansible_password="ElAdmin12345"
 ansible_port=5985
 ansible_connection=winrm
 ansible_winrm_transport=basic
@@ -74,7 +74,7 @@ cat <<EOL >> inventory_file.ini
 
 [windows:vars]
 ansible_user=Administrator
-ansible_password=Chris1853
+ansible_password="ElAdmin12345"
 ansible_port=5985
 ansible_connection=winrm
 ansible_winrm_transport=basic

@@ -1,0 +1,24 @@
+---
+- name: Configurar servidor de archivos en Windows Server 2022
+  hosts: windows
+  gather_facts: no
+
+  tasks:
+    - name: Instalar rol de File Server
+      win_feature:
+        name: FS-FileServer
+        state: present
+        include_management_tools: yes
+
+    - name: Crear carpeta compartida
+      win_file:
+        path: 'C:\Compartido'
+        state: directory
+
+    - name: Crear recurso compartido "Publico"
+      win_share:
+        name: Publico
+        path: 'C:\Compartido'
+        description: "Carpeta pública para compartir archivos"
+        full: Administrators
+        read: Everyone

@@ -1,0 +1,22 @@
+---
+- name: Instalar y configurar IIS en Windows Server 2022
+  hosts: windows
+  gather_facts: no
+
+  tasks:
+    - name: Instalar el rol de IIS
+      win_feature:
+        name: Web-Server
+        state: present
+        include_management_tools: yes
+
+    - name: Iniciar y habilitar el servicio IIS
+      win_service:
+        name: W3SVC
+        start_mode: auto
+        state: started
+
+    - name: Reemplazar página principal con bienvenida
+      win_copy:
+        content: "<h1>IIS corriendo en Windows Server 2022 🎉</h1>"
+        dest: "C:\\inetpub\\wwwroot\\index.html"
