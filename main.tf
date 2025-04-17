@@ -500,6 +500,14 @@ resource "aws_security_group" "windows_access" {
     }
 
     ingress {
+        description = "WinRM access HTTPS"
+        from_port   = 5986      # WinRM HTTPS
+        to_port     = 5986
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
         description = "RDP access"
         from_port   = 3389
         to_port     = 3389
@@ -560,6 +568,14 @@ resource "aws_security_group" "iis_windows_access" {
         description = "WinRM access"
         from_port   = 5985      # WinRM HTTP
         to_port     = 5985
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "WinRM access HTTPS"
+        from_port   = 5986      # WinRM HTTPS
+        to_port     = 5986
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
@@ -630,6 +646,14 @@ resource "aws_security_group" "ad_windows_access" {
     }
 
     ingress {
+        description = "WinRM access HTTPS"
+        from_port   = 5986      # WinRM HTTPS
+        to_port     = 5986
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
         description = "RDP access"
         from_port   = 3389
         to_port     = 3389
@@ -690,6 +714,14 @@ resource "aws_security_group" "file_windows_access" {
         description = "WinRM access"
         from_port   = 5985      # WinRM HTTP
         to_port     = 5985
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "WinRM access HTTPS"
+        from_port   = 5986      # WinRM HTTPS
+        to_port     = 5986
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
