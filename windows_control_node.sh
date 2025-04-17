@@ -41,7 +41,7 @@ INSTANCE_ID_FILE=$(aws ec2 describe-instances --filters "Name=tag:Role,Values=fi
   --query "Reservations[0].Instances[0].InstanceId" --output text)
 
 # Esperar a que Windows esté listo para devolver la contraseña (se toma unos minutos)
-sleep 300
+sleep 350
 
 # Obtener la contraseña de administrador usando AWS CLI y OpenSSL
 ADMIN_PASSWORD_IIS=$(aws ec2 get-password-data \
@@ -82,7 +82,7 @@ cat <<EOL >> inventory_iis.ini
 
 [windows:vars]
 ansible_user=Administrator
-ansible_password=$ADMIN_PASSWORD_IIS
+ansible_password="$ADMIN_PASSWORD_IIS"
 ansible_port=5985
 ansible_connection=winrm
 ansible_winrm_transport=basic
@@ -95,7 +95,7 @@ cat <<EOL >> inventory_ad.ini
 
 [windows:vars]
 ansible_user=Administrator
-ansible_password=$ADMIN_PASSWORD_AD
+ansible_password="$ADMIN_PASSWORD_AD"
 ansible_port=5985
 ansible_connection=winrm
 ansible_winrm_transport=basic
@@ -108,7 +108,7 @@ cat <<EOL >> inventory_file.ini
 
 [windows:vars]
 ansible_user=Administrator
-ansible_password=$ADMIN_PASSWORD_FILE
+ansible_password="$ADMIN_PASSWORD_FILE"
 ansible_port=5985
 ansible_connection=winrm
 ansible_winrm_transport=basic
