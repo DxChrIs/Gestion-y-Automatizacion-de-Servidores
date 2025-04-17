@@ -1439,12 +1439,30 @@ resource "aws_iam_role" "ec2_role" {
         ]
     })
 }
-
+resource "aws_iam_policy" "ec2_get_password_data" {
+    name        = "EC2GetPasswordDataPolicy"
+    description = "Permite llamar a ec2:GetPasswordData"
+    policy = jsonencode({
+        Version = "2012-10-17",
+        Statement = [
+        {
+            Effect = "Allow",
+            Action = [
+            "ec2:GetPasswordData"
+            ],
+            Resource = "*"
+        }
+        ]
+    })
+}
 resource "aws_iam_role_policy_attachment" "ec2_readonly_policy" {
     role       = aws_iam_role.ec2_role.name
     policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
 }
-
+resource "aws_iam_role_policy_attachment" "attach_get_password_data" {
+    role       = aws_iam_role.ec2_role.name
+    policy_arn = aws_iam_policy.ec2_get_password_data.arn
+}
 resource "aws_iam_instance_profile" "ec2_instance_profile" {
     name = "ec2-instance-profile"
     role = aws_iam_role.ec2_role.name
