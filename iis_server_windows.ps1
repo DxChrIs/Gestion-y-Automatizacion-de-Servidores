@@ -1,28 +1,72 @@
-#Enable Powershell remoting
+# Función para elevar el script automáticamente si no tiene privilegios de administrador
+if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Start-Process powershell -ArgumentList "-File `"$PSCommandPath`"" -Verb RunAs
+    exit
+}
+
+# Habilitar PowerShell Remoting
 Enable-PSRemoting -Force
 
-#Set WinRM service startup type to automatic
-Set-Service WinRM -StartupType 'Automatic'
+# Configurar WinRM para iniciar automáticamente
+Set-Service WinRM -StartupType Automatic
+Start-Service WinRM
 
-#Configure WinRM to allow unencrypted traffic and basic authentication
-Set-Item -Path WSMan:\localhost\Service\Auth\Certificate -Value $true
-Set-Item -Path WSMan:\localhost\Service\Auth\Basic -Value $true
-Set-Item -Path WSMan:\localhost\Service\AllowUnencrypted -Value $true
-Set-Item -Path WSMan:\localhost\Service\Auth\CredSSP -Value $true
+# Configurar autenticación WinRM (Basic, Certificate, AllowUnencrypted, CredSSP)
+$authPaths = @(
+    @{Path="WSMan:\localhost\Service\Auth\Certificate"; Value=$true},
+    @{Path="WSMan:\localhost\Service\Auth\Basic"; Value=$true},
+    @{Path="WSMan:\localhost\Service\AllowUnencrypted"; Value=$true},
+    @{Path="WSMan:\localhost\Service\Auth\CredSSP"; Value=$true}
+)
 
-#Create a Firewall rule to allow WinRM HTTP inbound traffic
-New-NetFirewallRule -DisplayName "Allow WinRM HTTP" -Direction Inbound -LocalPort 5985 -Protocol TCP -Action Allow
-New-NetFirewallRule -DisplayName "Allow ICMPv4-In" -Protocol ICMPv4 -IcmpType 8 -Direction Inbound -Action Allow
-New-NetFirewallRule -DisplayName "Allow ICMPv6-In" -Protocol ICMPv6 -IcmpType 128 -Direction Inbound -Action Allow
+foreach ($item in $authPaths) {
+    try {
+        Set-Item -Path $item.Path -Value $item.Value -Force
+    } catch {
+        # Ignorar errores en la configuración de autenticación
+    }
+}
 
-#Set LocalAccountTokenFilterPolicy
-New-ItemProperty -Name LocalAccountTokenFilterPolicy -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -PropertyType DWord -Value 1 -Force
+# Agregar reglas de firewall para WinRM e ICMP
+$firewallRules = @(
+    @{Name="Allow WinRM HTTP"; Port=5985; Protocol="TCP"},
+    @{Name="Allow ICMPv4-In"; Protocol="ICMPv4"; IcmpType=8},
+    @{Name="Allow ICMPv6-In"; Protocol="ICMPv6"; IcmpType=128}
+)
 
-#Set Execution Policy to Unrestricted
-Set-ExecutionPolicy Unrestricted -Force
+foreach ($rule in $firewallRules) {
+    try {
+        if ($rule.Port) {
+            New-NetFirewallRule -DisplayName $rule.Name -Direction Inbound -LocalPort $rule.Port -Protocol $rule.Protocol -Action Allow -ErrorAction Stop
+        } else {
+            New-NetFirewallRule -DisplayName $rule.Name -Protocol $rule.Protocol -IcmpType $rule.IcmpType -Direction Inbound -Action Allow -ErrorAction Stop
+        }
+    } catch {
+        # Ignorar errores en la creación de reglas de firewall
+    }
+}
 
-#Configure TrustedHosts
-Set-Item WSMan:\localhost\Client\TrustedHosts -Value "*" -Force
+# Configurar LocalAccountTokenFilterPolicy
+try {
+    New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" `
+                    -Name "LocalAccountTokenFilterPolicy" -PropertyType DWord -Value 1 -Force
+} catch {
+    # Ignorar errores en la configuración de LocalAccountTokenFilterPolicy
+}
 
-#Restart WinRM service to apply changes
+# Establecer política de ejecución de PowerShell
+try {
+    Set-ExecutionPolicy Unrestricted -Force
+} catch {
+    # Ignorar errores en la configuración de política de ejecución
+}
+
+# Configurar TrustedHosts
+try {
+    Set-Item WSMan:\localhost\Client\TrustedHosts -Value "*" -Force
+} catch {
+    # Ignorar errores en la configuración de TrustedHosts
+}
+
+# Reiniciar servicio WinRM
 Restart-Service WinRM
