@@ -979,12 +979,7 @@ resource "aws_launch_template" "ad_windows_template" {
         }
     }
 
-    user_data = base64encode(<<-EOF
-        <powershell>
-        $(file("ad_server_windows.ps1"))
-        </powershell>
-        EOF
-        )
+    user_data = base64encode(file("/ad_server_windows.ps1"))
 
     tag_specifications {
         resource_type = "instance"
@@ -1027,12 +1022,7 @@ resource "aws_launch_template" "file_windows_template" {
         }
     }
 
-    user_data = base64encode(<<-EOF
-        <powershell>
-        $(file("file_server_windows.ps1"))
-        </powershell>
-        EOF
-        )
+    user_data = base64encode(file("/file_server_windows.ps1"))
 
     tag_specifications {
         resource_type = "instance"
