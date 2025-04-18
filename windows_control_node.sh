@@ -30,18 +30,17 @@ PEM_KEY_PATH="/home/ubuntu/ssh-code.pem"
 # Detectar la IP local de la instancia
 MY_IP=$(hostname -I | awk '{print $1}')
 
+sleep 240
+
 # Obtener la ID de la instancia IIS (puedes hacer esto con AD y FILE igual)
-INSTANCE_ID_IIS=$(aws ec2 describe-instances --filters "Name=tag:Role,Values=iis" \
+INSTANCE_ID_IIS=$(aws ec2 describe-instances --filters "Name=tag:Role,Values=iis" "Name=instance-state-name,Values=running" \
   --query "Reservations[0].Instances[0].InstanceId" --output text)
 
-INSTANCE_ID_AD=$(aws ec2 describe-instances --filters "Name=tag:Role,Values=ad" \
+INSTANCE_ID_AD=$(aws ec2 describe-instances --filters "Name=tag:Role,Values=ad" "Name=instance-state-name,Values=running" \
   --query "Reservations[0].Instances[0].InstanceId" --output text)
 
-INSTANCE_ID_FILE=$(aws ec2 describe-instances --filters "Name=tag:Role,Values=file" \
+INSTANCE_ID_FILE=$(aws ec2 describe-instances --filters "Name=tag:Role,Values=file" "Name=instance-state-name,Values=running"\
   --query "Reservations[0].Instances[0].InstanceId" --output text)
-
-# Esperar a que Windows esté listo para devolver la contraseña (se toma unos minutos)
-sleep 300
 
 # Obtener la contraseña de administrador usando AWS CLI y OpenSSL
 ADMIN_PASSWORD_IIS=$(aws ec2 get-password-data \
@@ -64,11 +63,11 @@ ADMIN_PASSWORD_FILE=$(aws ec2 get-password-data \
 
 # Obtener IPs de las instancias EC2 con etiquetas específicas (iis, ad, file)
 #IIS
-aws ec2 describe-instances --filters "Name=tag:Role,Values=iis" --query "Reservations[*].Instances[*].PrivateDnsName" --output text > iis_ips.txt
+aws ec2 describe-instances --filters "Name=tag:Role,Values=iis" "Name=instance-state-name,Values=running" --query "Reservations[*].Instances[*].PrivateDnsName" --output text > iis_ips.txt
 #AD
-aws ec2 describe-instances --filters "Name=tag:Role,Values=ad" --query "Reservations[*].Instances[*].PrivateDnsName" --output text > ad_ips.txt
+aws ec2 describe-instances --filters "Name=tag:Role,Values=ad" "Name=instance-state-name,Values=running" --query "Reservations[*].Instances[*].PrivateDnsName" --output text > ad_ips.txt
 #File
-aws ec2 describe-instances --filters "Name=tag:Role,Values=file" --query "Reservations[*].Instances[*].PrivateDnsName" --output text > file_ips.txt
+aws ec2 describe-instances --filters "Name=tag:Role,Values=file" "Name=instance-state-name,Values=running" --query "Reservations[*].Instances[*].PrivateDnsName" --output text > file_ips.txt
 
 # === Crear archivo de inventario Windows para Ansible + WinRM ===
 # IIS
