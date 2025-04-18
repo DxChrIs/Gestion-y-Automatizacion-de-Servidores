@@ -71,13 +71,12 @@ aws ec2 describe-instances --filters "Name=tag:Role,Values=ad" --query "Reservat
 aws ec2 describe-instances --filters "Name=tag:Role,Values=file" --query "Reservations[*].Instances[*].PrivateDnsName" --output text > file_ips.txt
 
 # === Crear archivo de inventario Windows para Ansible + WinRM ===
-echo "[windows]" > inventory_iis.ini; echo "[windows]" > inventory_ad.ini; echo "[windows]" > inventory_file.ini
-cat iis_ips.txt | grep -v "$MY_IP" >> inventory_iis.ini
-cat ad_ips.txt | grep -v "$MY_IP" >> inventory_ad.ini
-cat file_ips.txt | grep -v "$MY_IP" >> inventory_file.ini
-
-cat <<EOL >> inventory_iis.ini
-
+# IIS
+{
+  echo "[windows]"
+  grep -v "$MY_IP" iis_ips.txt
+  echo ""
+  cat <<EOL
 [windows:vars]
 ansible_user=Administrator
 ansible_password="$ADMIN_PASSWORD_IIS"
@@ -86,11 +85,15 @@ ansible_connection=winrm
 ansible_winrm_transport=basic
 ansible_winrm_server_cert_validation=ignore
 ansible_winrm_scheme=http
-ansible_winrm_kerberos_delegation=true
 EOL
+} > inventory_iis.ini
 
-cat <<EOL >> inventory_ad.ini
-
+# AD
+{
+  echo "[windows]"
+  grep -v "$MY_IP" ad_ips.txt
+  echo ""
+  cat <<EOL
 [windows:vars]
 ansible_user=Administrator
 ansible_password="$ADMIN_PASSWORD_AD"
@@ -99,11 +102,15 @@ ansible_connection=winrm
 ansible_winrm_transport=basic
 ansible_winrm_server_cert_validation=ignore
 ansible_winrm_scheme=http
-ansible_winrm_kerberos_delegation=true
 EOL
+} > inventory_ad.ini
 
-cat <<EOL >> inventory_file.ini
-
+# FILE
+{
+  echo "[windows]"
+  grep -v "$MY_IP" file_ips.txt
+  echo ""
+  cat <<EOL
 [windows:vars]
 ansible_user=Administrator
 ansible_password="$ADMIN_PASSWORD_FILE"
@@ -112,8 +119,8 @@ ansible_connection=winrm
 ansible_winrm_transport=basic
 ansible_winrm_server_cert_validation=ignore
 ansible_winrm_scheme=http
-ansible_winrm_kerberos_delegation=true
 EOL
+} > inventory_file.ini
 
 sleep 60
 
