@@ -1,8 +1,3 @@
-# Ruta del script real que quieres ejecutar (tus comandos)
-$scriptPath = "$env:ProgramData\winrm-config.ps1"
-
-# Contenido de tu script original
-$scriptContent = @'
 #Enable Powershell remoting
 Enable-PSRemoting -Force
 
@@ -31,15 +26,3 @@ Set-Item WSMan:\localhost\Client\TrustedHosts -Value "*" -Force
 
 #Restart WinRM service to apply changes
 Restart-Service WinRM
-'@
-
-# Guardar el script en disco
-Set-Content -Path $scriptPath -Value $scriptContent -Force -Encoding UTF8
-
-# Crear acción para tarea programada (ejecuta el script como SYSTEM con máximos privilegios)
-$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -File `"$scriptPath`""
-$trigger = New-ScheduledTaskTrigger -AtStartup
-$principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -RunLevel Highest
-
-# Registrar tarea con nombre único
-Register-ScheduledTask -TaskName "Auto_Configure_WinRM" -Action $action -Trigger $trigger -Principal $principal -Force

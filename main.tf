@@ -936,7 +936,33 @@ resource "aws_launch_template" "iis_windows_template" {
 
     user_data = base64encode(<<-EOF
         <powershell>
-        $(file("iis_server_windows.ps1"))
+        # Crear el script de configuración con log de depuración
+        $script = @'
+        Start-Transcript -Path "C:\\ProgramData\\user_data_log.txt" -Append
+
+        Enable-PSRemoting -Force
+        Set-Service WinRM -StartupType 'Automatic'
+        Set-Item -Path WSMan:\\localhost\\Service\\Auth\\Certificate -Value \$true
+        Set-Item -Path WSMan:\\localhost\\Service\\Auth\\Basic -Value \$true
+        Set-Item -Path WSMan:\\localhost\\Service\\AllowUnencrypted -Value \$true
+        Set-Item -Path WSMan:\\localhost\\Service\\Auth\\CredSSP -Value \$true
+
+        New-NetFirewallRule -DisplayName "Allow WinRM HTTP" -Direction Inbound -LocalPort 5985 -Protocol TCP -Action Allow
+        New-NetFirewallRule -DisplayName "Allow ICMPv4-In" -Protocol ICMPv4 -IcmpType 8 -Direction Inbound -Action Allow
+        New-NetFirewallRule -DisplayName "Allow ICMPv6-In" -Protocol ICMPv6 -IcmpType 128 -Direction Inbound -Action Allow
+
+        New-ItemProperty -Name LocalAccountTokenFilterPolicy -Path HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System -PropertyType DWord -Value 1 -Force
+        Set-ExecutionPolicy Unrestricted -Force
+        Set-Item WSMan:\\localhost\\Client\\TrustedHosts -Value "*" -Force
+
+        Restart-Service WinRM
+
+        Stop-Transcript
+        '@
+
+        # Guardar el script como InitializeInstance.ps1 para EC2Launch v2
+        $path = "C:\\ProgramData\\Amazon\\EC2-Windows\\Launch\\Scripts\\InitializeInstance.ps1"
+        Set-Content -Path $path -Value $script -Encoding UTF8
         </powershell>
         EOF
         )
