@@ -2,6 +2,7 @@
 - name: Setup MySQL Server with Advanced Configuration and Security
   hosts: all
   become: yes
+
   tasks:
     - name: Instalar MySQL Server
       apt:
@@ -15,11 +16,12 @@
         state: started
         enabled: yes
 
-    - name: Asegurar acceso root local sin password (solo para testing, deshabilitar en producción)
+    - name: Configurar contraseña compleja y plugin para root (login con contraseña)
       mysql_user:
         name: root
         host: localhost
-        password: ""
+        password: "ElAdmin1853"
+        plugin: mysql_native_password
         login_unix_socket: /var/run/mysqld/mysqld.sock
         state: present
 
@@ -37,7 +39,6 @@
             email VARCHAR(100) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
           );
-        state: present
 
     - name: Insertar datos de prueba en la tabla "users"
       mysql_query:
@@ -46,95 +47,77 @@
           VALUES ('John Doe', 'john.doe@example.com'),
                   ('Jane Smith', 'jane.smith@example.com'),
                   ('Emily Johnson', 'emily.johnson@example.com');
-        state: present
 
-    - name: Crear usuario con acceso solo a base de datos específica
-      mysql_user:
-        name: "myuser"
-        password: "securepassword"
-        host: "%"
-        priv: "testdb.*:ALL"
-        state: present
-
-    - name: Crear base de datos específica para el usuario
+    - name: Crear base de datos "mydb"
       mysql_db:
         name: mydb
         state: present
 
-    - name: Crear usuario MySQL "mysql_user2" con permisos de lectura en la base de datos "testdb"
+    - name: Crear usuario con todos los privilegios en testdb
       mysql_user:
-        name: "mysql_user2"
-        password: "readpassword"
+        name: myuser
+        password: securepassword
+        host: "%"
+        priv: "testdb.*:ALL"
+        state: present
+
+    - name: Crear usuario solo lectura en testdb
+      mysql_user:
+        name: mysql_user2
+        password: readpassword
         host: "%"
         priv: "testdb.*:SELECT"
         state: present
 
-    - name: Crear usuario MySQL "mysql_user3" con permisos de escritura en la base de datos "testdb"
+    - name: Crear usuario solo escritura en testdb
       mysql_user:
-        name: "mysql_user3"
-        password: "writepassword"
+        name: mysql_user3
+        password: writepassword
         host: "%"
         priv: "testdb.*:INSERT,UPDATE"
         state: present
 
-    - name: Configurar el firewall para permitir acceso SSH
-      ufw:
-        rule: allow
-        name: "OpenSSH"
-        port: 22
-
-    - name: Habilitar y configurar el firewall para MySQL (puerto 3306)
-      ufw:
-        state: enabled
-        rule: allow
-        name: "MySQL"
-        port: 3306
-
-    - name: Instalar fail2ban para proteger MySQL contra ataques de fuerza bruta
+    - name: Instalar fail2ban
       apt:
         name: fail2ban
         state: present
 
-    - name: Crear grupo de acceso ACL para usuarios de MySQL
-      user:
+    - name: Crear grupo de administración ACL para usuarios de MySQL
+      group:
         name: mysqladmins
         state: present
-        group: mysql
 
-    - name: Configurar configuración de seguridad en MySQL
+    - name: Configurar archivo seguro para exportaciones en MySQL
       mysql_variables:
         name: secure-file-priv
         value: "/var/lib/mysql-files"
         state: present
 
-    - name: Configurar contraseña compleja para root (para producción)
-      mysql_user:
-        name: root
-        host: localhost
-        password: "ElAdmin1853"
-        login_unix_socket: /var/run/mysqld/mysqld.sock
-        state: present
+    - name: Configurar UFW - permitir SSH
+      ufw:
+        rule: allow
+        name: "OpenSSH"
+        port: 22
 
-    - name: Configurar MySQL para utilizar autenticación basada en plugins
-      mysql_user:
-        name: root
-        host: localhost
-        plugin: mysql_native_password
-        state: present
+    - name: Habilitar y permitir acceso al puerto 3306 (MySQL)
+      ufw:
+        state: enabled
+        rule: allow
+        port: 3306
+        proto: tcp
 
-    - name: Realizar un backup de la base de datos MySQL
+    - name: Realizar backup completo de MySQL
       shell: mysqldump --all-databases > /var/backups/all_databases_$(date +'%Y-%m-%d').sql
-      when: ansible_date_time.iso8601 | regex_search('^20[0-9]{2}-[0-9]{2}-[0-9]{2}')
       register: backup_result
 
-    - name: Mostrar mensaje de éxito de backup
+    - name: Mostrar resultado del backup
       debug:
-        msg: "Backup realizado correctamente: {{ backup_result.stdout }}"
+        msg: "Backup realizado correctamente."
 
-    - name: Configurar la auditoría para MySQL
+    - name: Configurar auditoría básica en MySQL
       lineinfile:
         path: /etc/mysql/mysql.conf.d/mysqld.cnf
-        regexp: '^audit_log'
+        regexp: '^#?audit_log'
         line: 'audit_log=FORCE_PLUS_PERMANENT'
       notify:
         - Restart MySQL
