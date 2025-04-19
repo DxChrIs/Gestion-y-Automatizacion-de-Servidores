@@ -5,7 +5,7 @@
   vars:
     site_name: "MiSitio"
     site_port: 80
-    site_path: "C:\\inetpub\\MiSitio"
+    site_path: "C:\\inetpub\\wwwroot\\MiSitio"
     backup_dir: "C:\\IISBackup"
     logs_dir: "C:\\inetpub\\logs\\LogFiles\\MiSitio"
     username: "adminuser"

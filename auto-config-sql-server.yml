@@ -4,9 +4,9 @@
   become: yes
 
   vars:
-  apache_users:
-    - { name: "adminsql", group: "sqladmin", sudo: true }
-    - { name: "devsql", group: "sqldev", sudo: false }
+  sql_users:
+    - { name: "adminsql", group: "sqladmins", sudo: true }
+    - { name: "devsql", group: "sqldevs", sudo: false }
     - { name: "auditor", group: "auditores", sudo: false }
 
   tasks:
@@ -21,6 +21,11 @@
         name: mysql
         state: started
         enabled: yes
+    
+    - name: Crear base de datos "mydb"
+      mysql_db:
+        name: mydb
+        state: present
 
     - name: Configurar contraseña compleja y plugin para root (login con contraseña)
       mysql_user:
@@ -47,32 +52,18 @@
         shell: /bin/bash
         create_home: yes
         state: present
-      loop: "{{ apache_users }}"
+      loop: "{{ sql_users }}"
 
     - name: Establecer claves SSH para los usuarios
       authorized_key:
         user: "{{ item.name }}"
         key: "ssh-rsa CuentasSQL1853"
         state: present
-      loop: "{{ apache_users }}"
-
-    - name: Asignar privilegios sudo limitados solo a adminweb
-      lineinfile:
-        dest: /etc/sudoers.d/{{ item.name }}
-        line: "{{ item.name }} ALL=(ALL) NOPASSWD: /bin/systemctl restart apache2"
-        create: yes
-        mode: '0440'
-      when: item.sudo
-      loop: "{{ apache_users }}"
+      loop: "{{ sql_users }}"
 
     - name: Instalar fail2ban
       apt:
         name: fail2ban
-        state: present
-
-    - name: Crear grupo de administración ACL para usuarios de MySQL
-      group:
-        name: mysqladmins
         state: present
 
     - name: Configurar archivo seguro para exportaciones en MySQL
