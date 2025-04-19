@@ -30,7 +30,7 @@ PEM_KEY_PATH="/home/ubuntu/ssh-code.pem"
 # Detectar la IP local de la instancia
 MY_IP=$(hostname -I | awk '{print $1}')
 
-sleep 240
+sleep 120
 
 # Obtener la ID de la instancia IIS (puedes hacer esto con AD y FILE igual)
 INSTANCE_ID_IIS=$(aws ec2 describe-instances --filters "Name=tag:Role,Values=iis" "Name=instance-state-name,Values=running" \
