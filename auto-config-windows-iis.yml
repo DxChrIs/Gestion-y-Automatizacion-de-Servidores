@@ -18,5 +18,5 @@
 
     - name: Reemplazar página principal con bienvenida
       win_copy:
-        content: "<h1>IIS corriendo en Windows Server 2022 🎉</h1>"
+        content: "<h1>IIS corriendo en Windows Server 2022</h1>"
         dest: "C:\\inetpub\\wwwroot\\index.html"
