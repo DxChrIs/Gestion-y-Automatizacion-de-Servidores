@@ -3,6 +3,12 @@
   hosts: all
   become: yes
 
+  vars:
+  apache_users:
+    - { name: "adminsql", group: "sqladmin", sudo: true }
+    - { name: "devsql", group: "sqldev", sudo: false }
+    - { name: "auditor", group: "auditores", sudo: false }
+
   tasks:
     - name: Instalar MySQL Server
       apt:
@@ -25,57 +31,39 @@
         login_unix_socket: /var/run/mysqld/mysqld.sock
         state: present
 
-    - name: Crear base de datos "testdb"
-      mysql_db:
-        name: testdb
+    - name: Crear grupos para jerarquía empresarial
+      group:
+        name: "{{ item }}"
         state: present
+      loop:
+        - sqladmins
+        - sqldevs
+        - auditores
 
-    - name: Crear tabla de prueba "users" en "testdb"
-      mysql_query:
-        query: |
-          CREATE TABLE IF NOT EXISTS testdb.users (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(100) NOT NULL,
-            email VARCHAR(100) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-          );
-
-    - name: Insertar datos de prueba en la tabla "users"
-      mysql_query:
-        query: |
-          INSERT INTO testdb.users (name, email)
-          VALUES ('John Doe', 'john.doe@example.com'),
-                  ('Jane Smith', 'jane.smith@example.com'),
-                  ('Emily Johnson', 'emily.johnson@example.com');
-
-    - name: Crear base de datos "mydb"
-      mysql_db:
-        name: mydb
+    - name: Crear usuarios con jerarquía empresarial
+      user:
+        name: "{{ item.name }}"
+        group: "{{ item.group }}"
+        shell: /bin/bash
+        create_home: yes
         state: present
+      loop: "{{ apache_users }}"
 
-    - name: Crear usuario con todos los privilegios en testdb
-      mysql_user:
-        name: myuser
-        password: securepassword
-        host: "%"
-        priv: "testdb.*:ALL"
+    - name: Establecer claves SSH para los usuarios
+      authorized_key:
+        user: "{{ item.name }}"
+        key: "ssh-rsa CuentasSQL1853"
         state: present
+      loop: "{{ apache_users }}"
 
-    - name: Crear usuario solo lectura en testdb
-      mysql_user:
-        name: mysql_user2
-        password: readpassword
-        host: "%"
-        priv: "testdb.*:SELECT"
-        state: present
-
-    - name: Crear usuario solo escritura en testdb
-      mysql_user:
-        name: mysql_user3
-        password: writepassword
-        host: "%"
-        priv: "testdb.*:INSERT,UPDATE"
-        state: present
+    - name: Asignar privilegios sudo limitados solo a adminweb
+      lineinfile:
+        dest: /etc/sudoers.d/{{ item.name }}
+        line: "{{ item.name }} ALL=(ALL) NOPASSWD: /bin/systemctl restart apache2"
+        create: yes
+        mode: '0440'
+      when: item.sudo
+      loop: "{{ apache_users }}"
 
     - name: Instalar fail2ban
       apt:
