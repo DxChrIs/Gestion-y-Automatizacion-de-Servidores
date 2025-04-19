@@ -3,6 +3,23 @@
   hosts: windows
   gather_facts: no
 
+  vars:
+    shared_folder_path: 'C:\Compartido'
+    share_name: "Publico"
+    share_description: "Carpeta pública para compartir archivos"
+    domain_name: corp.local
+    admin_group: "Domain Admins"
+    file_audit_group: "FileAuditors"
+    users:
+      - name: "user1"
+        full_name: "User One"
+        password: "SecurePassword123"
+        group: "Users"
+      - name: "user2"
+        full_name: "User Two"
+        password: "SecurePassword456"
+        group: "Users"
+
   tasks:
     - name: Instalar rol de File Server
       win_feature:
@@ -12,13 +29,153 @@
 
     - name: Crear carpeta compartida
       win_file:
-        path: 'C:\Compartido'
+        path: "{{ shared_folder_path }}"
         state: directory
 
     - name: Crear recurso compartido "Publico"
       win_share:
-        name: Publico
-        path: 'C:\Compartido'
-        description: "Carpeta pública para compartir archivos"
-        full: Administrators
-        read: Everyone
+        name: "{{ share_name }}"
+        path: "{{ shared_folder_path }}"
+        description: "{{ share_description }}"
+        full: "{{ admin_group }}"
+        read: "Everyone"
+
+    - name: Crear grupo de seguridad para auditoría de archivos
+      win_group:
+        name: "{{ file_audit_group }}"
+        domain: "{{ domain_name }}"
+        group_scope: "Global"
+        state: present
+
+    - name: Crear usuarios en Active Directory
+      win_user:
+        name: "{{ item.name }}"
+        given_name: "{{ item.full_name.split(' ')[0] }}"
+        surname: "{{ item.full_name.split(' ')[1] }}"
+        full_name: "{{ item.full_name }}"
+        password: "{{ item.password }}"
+        state: present
+        user_cannot_change_password: no
+        password_never_expires: no
+        groups:
+          - "{{ item.group }}"
+      loop: "{{ users }}"
+
+    - name: Asignar permisos avanzados a la carpeta compartida
+      win_acl:
+        path: "{{ shared_folder_path }}"
+        user: "{{ admin_group }}"
+        permissions:
+          - full_control
+        state: present
+
+    - name: Asignar permisos de lectura a los usuarios en la carpeta compartida
+      win_acl:
+        path: "{{ shared_folder_path }}"
+        user: "{{ file_audit_group }}"
+        permissions:
+          - read
+        state: present
+
+    - name: Aplicar auditoría de acceso a la carpeta compartida
+      win_audit_policy:
+        category: Object Access
+        subcategory: File System
+        policy: Success and Failure
+        state: enabled
+
+    - name: Configurar la auditoría de acceso a la carpeta compartida
+      win_file_audit:
+        path: "{{ shared_folder_path }}"
+        audit:
+          - "Success"
+          - "Failure"
+        users:
+          - "Everyone"
+        state: present
+
+    - name: Habilitar control de acceso de usuarios y grupos para recursos compartidos
+      win_acl:
+        path: "{{ shared_folder_path }}"
+        user: "Everyone"
+        permissions:
+          - read
+        state: present
+
+    - name: Establecer políticas de acceso para el recurso compartido "Publico"
+      win_share_permission:
+        name: "{{ share_name }}"
+        account: "Everyone"
+        permission: read
+        state: present
+
+    - name: Crear un grupo de seguridad de acceso restringido "RestrictedAccess"
+      win_group:
+        name: "RestrictedAccess"
+        domain: "{{ domain_name }}"
+        group_scope: "Global"
+        state: present
+
+    - name: Agregar usuario a grupo de acceso restringido "RestrictedAccess"
+      win_group_membership:
+        name: "RestrictedAccess"
+        members:
+          - "user1"
+        state: present
+
+    - name: Configurar que el grupo "RestrictedAccess" solo tenga acceso de lectura
+      win_acl:
+        path: "{{ shared_folder_path }}"
+        user: "RestrictedAccess"
+        permissions:
+          - read
+        state: present
+
+    - name: Crear script de backup de la carpeta compartida
+      win_file:
+        path: 'C:\Backup\Backup_Script.bat'
+        state: touch
+        content: |
+          @echo off
+          robocopy "{{ shared_folder_path }}" "C:\Backup" /E /COPYALL /R:5 /W:5
+          echo Backup completado el %date% %time% >> "C:\Backup\backup_log.txt"
+      mode: '0755'
+
+    - name: Crear tarea programada para realizar backup de la carpeta compartida
+      win_scheduled_task:
+        name: "Backup_Carpeta_Compartida"
+        actions:
+          - path: 'C:\Backup\Backup_Script.bat'
+        trigger:
+          - type: daily
+            start_boundary: '2022-12-01T02:00:00'
+        state: present
+
+    - name: Verificar si los permisos de acceso de la carpeta compartida son correctos
+      win_acl:
+        path: "{{ shared_folder_path }}"
+        permissions:
+          - full_control
+        state: query
+
+    - name: Aplicar configuración de firewall para permitir acceso SMB
+      win_firewall_rule:
+        name: "Allow SMB Inbound"
+        localport: 445
+        protocol: TCP
+        action: allow
+        direction: inbound
+        enabled: yes
+
+    - name: Configurar notificación por correo en caso de fallo de backup
+      win_scheduled_task:
+        name: "Backup_Error_Notification"
+        actions:
+          - path: 'powershell.exe'
+            arguments: |
+              Send-MailMessage -From 'admin@corp.local' -To 'admin@corp.local' -Subject 'Error en el Backup' -Body 'El backup de la carpeta compartida ha fallado.' -SmtpServer 'smtp.corp.local'
+        trigger:
+          - type: eventlog
+            event_log: "Application"
+            event_id: 1001
+        state: present

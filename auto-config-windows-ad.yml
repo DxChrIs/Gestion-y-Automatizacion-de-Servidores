@@ -1,24 +1,187 @@
 ---
-- name: Configurar Active Directory en Windows Server 2022
+- name: Configurar y asegurar Active Directory en Windows Server 2022
   hosts: windows
   gather_facts: no
 
   vars:
     domain_name: corp.local
     netbios_name: CORP
-    safe_mode_password: 'Chris1853'
+    safe_mode_password: 'ChrisAdmin1853'
+    admin_group: "Domain Admins"
+    ou_users: "OU=Users,DC=corp,DC=local"
+    ou_groups: "OU=Groups,DC=corp,DC=local"
+    ou_computers: "OU=Computers,DC=corp,DC=local"
+    ou_it: "OU=IT,DC=corp,DC=local"
+    password_policy_min_length: 12
+    password_policy_complexity: yes
+    password_policy_history: 24
 
   tasks:
-    - name: Instalar el rol de AD DS
+    - name: Instalar el rol de Active Directory Domain Services (AD DS)
       win_feature:
         name: AD-Domain-Services
         state: present
         include_management_tools: yes
 
-    - name: Promocionar a controlador de dominio (solo si no lo es ya)
+    - name: Promocionar el servidor a controlador de dominio (si no lo es ya)
       win_domain:
         dns_domain_name: "{{ domain_name }}"
         domain_netbios_name: "{{ netbios_name }}"
         safe_mode_password: "{{ safe_mode_password }}"
         state: domain_controller
         reboot: yes
+
+    - name: Crear Organizational Unit (OU) para Usuarios
+      win_ad_organizational_unit:
+        name: "Users"
+        path: "DC=corp,DC=local"
+        state: present
+
+    - name: Crear Organizational Unit (OU) para Grupos
+      win_ad_organizational_unit:
+        name: "Groups"
+        path: "DC=corp,DC=local"
+        state: present
+
+    - name: Crear Organizational Unit (OU) para Computadoras
+      win_ad_organizational_unit:
+        name: "Computers"
+        path: "DC=corp,DC=local"
+        state: present
+
+    - name: Crear Organizational Unit (OU) para IT
+      win_ad_organizational_unit:
+        name: "IT"
+        path: "DC=corp,DC=local"
+        state: present
+
+    - name: Crear grupo de seguridad local "Administradores"
+      win_group:
+        name: "Administrators"
+        state: present
+        members:
+          - "Administrator"
+
+    - name: Crear grupo global "Usuarios"
+      win_group:
+        name: "Users"
+        domain: "{{ domain_name }}"
+        group_scope: "Global"
+        state: present
+
+    - name: Crear grupo universal "ITAdmins"
+      win_group:
+        name: "ITAdmins"
+        domain: "{{ domain_name }}"
+        group_scope: "Universal"
+        state: present
+        members:
+          - "Administrator"
+          - "User1" # Ejemplo de miembro
+
+    - name: Crear grupo "Domain Admins"
+      win_group:
+        name: "{{ admin_group }}"
+        domain: "{{ domain_name }}"
+        group_scope: "Global"
+        state: present
+        members:
+          - "Administrator"
+
+    - name: Crear usuario "user1" en AD
+      win_user:
+        name: "user1"
+        given_name: "User"
+        surname: "One"
+        full_name: "User One"
+        password: "P@ssw0rd123"
+        state: present
+        user_cannot_change_password: no
+        password_never_expires: no
+        groups:
+          - "Users"
+          - "{{ admin_group }}" # Ejemplo de asignación de grupo
+
+    - name: Crear usuario "user2" en AD
+      win_user:
+        name: "user2"
+        given_name: "User"
+        surname: "Two"
+        full_name: "User Two"
+        password: "SecurePassword456"
+        state: present
+        user_cannot_change_password: no
+        password_never_expires: no
+        groups:
+          - "Users"
+
+    - name: Configurar la política de contraseñas de Active Directory
+      win_domain_password_policy:
+        minimum_password_length: "{{ password_policy_min_length }}"
+        password_complexity_enabled: "{{ password_policy_complexity }}"
+        password_history_size: "{{ password_policy_history }}"
+        state: present
+
+    - name: Configurar política de bloqueo de cuenta
+      win_domain_lockout_policy:
+        lockout_threshold: 5
+        lockout_duration: 15
+        lockout_counter_reset: 15
+        state: present
+
+    - name: Configurar Auditoría de Active Directory
+      win_audit_policy:
+        category: Logon/Logoff
+        subcategory: Logon/Logoff Events
+        policy: Success and Failure
+        state: enabled
+
+    - name: Configurar Auditoría de acceso a objetos (Archivos)
+      win_audit_policy:
+        category: Object Access
+        subcategory: File System
+        policy: Success and Failure
+        state: enabled
+
+    - name: Establecer tiempo de inactividad de sesión para bloquear la cuenta
+      win_user_right:
+        name: SeDenyInteractiveLogonRight
+        users:
+          - "User1"  # Ejemplo de usuario
+        state: present
+
+    - name: Delegar permisos sobre la OU IT
+      win_ad_organizational_unit:
+        name: "IT"
+        path: "DC=corp,DC=local"
+        delegate_permissions:
+          - "Create/Delete Computer Objects"
+          - "Reset Password"
+        state: present
+
+    - name: Asignar permisos de delegación a OU de usuarios
+      win_ad_organizational_unit:
+        name: "Users"
+        path: "DC=corp,DC=local"
+        delegate_permissions:
+          - "Create User"
+          - "Delete User"
+        state: present
+
+    - name: Configurar auditoría de acceso a cuentas de usuario
+      win_audit_policy:
+        category: Account Logon
+        subcategory: Special Logon
+        policy: Success and Failure
+        state: enabled
+
+    - name: Configurar directiva de expiración de contraseñas
+      win_domain_password_policy:
+        maximum_password_age: 60
+        state: present
+
+    - name: Configurar la directiva de cuenta de contraseñas nunca expira
+      win_user:
+        name: "user1"
+        password_never_expires: yes
+        state: present
