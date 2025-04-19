@@ -1,7 +1,14 @@
 ---
-- name: Setup Apache Web Server
+- name: Setup Apache Web Server con seguridad empresarial
   hosts: all
   become: yes
+
+  vars:
+    apache_users:
+      - { name: "adminweb", group: "webadmins", sudo: true }
+      - { name: "devweb", group: "webdevs", sudo: false }
+      - { name: "auditor", group: "auditores", sudo: false }
+
   tasks:
     - name: Instalar Apache2
       apt:
@@ -19,3 +26,171 @@
       copy:
         dest: /var/www/html/index.html
         content: "<h1>Servidor Web Apache funcionando correctamente</h1>"
+
+    - name: Crear grupos para jerarquía empresarial
+      group:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - webadmins
+        - webdevs
+        - auditores
+
+    - name: Crear usuarios con jerarquía empresarial
+      user:
+        name: "{{ item.name }}"
+        group: "{{ item.group }}"
+        shell: /bin/bash
+        create_home: yes
+        state: present
+      loop: "{{ apache_users }}"
+
+    - name: Establecer claves SSH para los usuarios
+      authorized_key:
+        user: "{{ item.name }}"
+        key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7FAKEKEYHERE1234567890EXAMPLE"
+        state: present
+      loop: "{{ apache_users }}"
+
+    - name: Asignar privilegios sudo limitados solo a adminweb
+      lineinfile:
+        dest: /etc/sudoers.d/{{ item.name }}
+        line: "{{ item.name }} ALL=(ALL) NOPASSWD: /bin/systemctl restart apache2"
+        create: yes
+        mode: '0440'
+      when: item.sudo
+      loop: "{{ apache_users }}"
+
+    - name: Establecer permisos ACL sobre /var/www/html
+      acl:
+        path: /var/www/html
+        entity: "{{ item.name }}"
+        etype: user
+        permissions: "{{ item.perms }}"
+        state: present
+        recursive: yes
+      loop:
+        - { name: "adminweb", perms: "rwX" }
+        - { name: "devweb", perms: "rwX" }
+        - { name: "auditor", perms: "rX" }
+
+    - name: Asegurar que el directorio /var/www/html tenga permisos correctos
+      file:
+        path: /var/www/html
+        owner: root
+        group: webadmins
+        mode: '2775'
+
+    - name: Endurecer permisos de archivos por default (umask)
+      copy:
+        dest: /etc/profile.d/custom_umask.sh
+        content: |
+          umask 027
+        mode: '0755'
+
+    - name: Deshabilitar el usuario root vía SSH
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin no'
+        state: present
+        backup: yes
+
+    # --------------------------
+    # 1. Configurar UFW
+    # --------------------------
+    - name: Instalar UFW
+      apt:
+        name: ufw
+        state: present
+
+    - name: Permitir puertos necesarios en UFW
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+      loop:
+        - "22"    # SSH
+        - "80"    # HTTP
+
+    - name: Habilitar UFW y establecer política predeterminada
+      ufw:
+        state: enabled
+        policy: deny
+
+    # --------------------------
+    # 2. Login Banner con advertencia legal
+    # --------------------------
+    - name: Crear banner de advertencia legal
+      copy:
+        dest: /etc/issue.net
+        content: |
+          ****************************************************************
+          * ADVERTENCIA: Este sistema es solo para uso autorizado.       *
+          * Toda actividad es monitoreada y registrada.                 *
+          * El acceso no autorizado será investigado y reportado.       *
+          ****************************************************************
+
+    - name: Configurar SSH para usar el banner legal
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^Banner'
+        line: 'Banner /etc/issue.net'
+
+    - name: Reiniciar servicio SSH
+      service:
+        name: ssh
+        state: restarted
+
+    # --------------------------
+    # 3. Instalar logwatch
+    # --------------------------
+    - name: Instalar logwatch
+      apt:
+        name: logwatch
+        state: present
+
+    - name: Configurar logwatch para enviar reportes diarios
+      lineinfile:
+        path: /etc/cron.daily/00logwatch
+        create: yes
+        line: "/usr/sbin/logwatch --output mail --mailto root --detail high"
+
+    # --------------------------
+    # 4. Activar auditd
+    # --------------------------
+    - name: Instalar auditd
+      apt:
+        name: auditd
+        state: present
+
+    - name: Habilitar servicio auditd
+      service:
+        name: auditd
+        state: started
+        enabled: yes
+
+    # --------------------------
+    # 5. Crear backups diarios de /var/www
+    # --------------------------
+    - name: Crear directorio de backups si no existe
+      file:
+        path: /opt/backups
+        state: directory
+        mode: '0755'
+
+    - name: Crear script de backup diario
+      copy:
+        dest: /usr/local/bin/backup_web.sh
+        mode: '0755'
+        content: |
+          #!/bin/bash
+          fecha=$(date +%F)
+          tar -czf /opt/backups/web_backup_$fecha.tar.gz /var/www/html
+
+    - name: Agregar cronjob para backup diario
+      cron:
+        name: "Backup diario del sitio web"
+        user: root
+        job: "/usr/local/bin/backup_web.sh"
+        minute: "0"
+        hour: "2"
