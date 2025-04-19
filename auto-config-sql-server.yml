@@ -3,12 +3,6 @@
   hosts: all
   become: yes
 
-  vars:
-  sql_users:
-    - { name: "adminsql", group: "sqladmins", sudo: true }
-    - { name: "devsql", group: "sqldevs", sudo: false }
-    - { name: "auditor", group: "auditores", sudo: false }
-
   tasks:
     - name: Instalar MySQL Server
       apt:
@@ -21,11 +15,6 @@
         name: mysql
         state: started
         enabled: yes
-    
-    - name: Crear base de datos "mydb"
-      mysql_db:
-        name: mydb
-        state: present
 
     - name: Configurar contraseña compleja y plugin para root (login con contraseña)
       mysql_user:
@@ -36,34 +25,66 @@
         login_unix_socket: /var/run/mysqld/mysqld.sock
         state: present
 
-    - name: Crear grupos para jerarquía empresarial
-      group:
-        name: "{{ item }}"
+    - name: Crear base de datos "testdb"
+      mysql_db:
+        name: testdb
         state: present
-      loop:
-        - sqladmins
-        - sqldevs
-        - auditores
 
-    - name: Crear usuarios con jerarquía empresarial
-      user:
-        name: "{{ item.name }}"
-        group: "{{ item.group }}"
-        shell: /bin/bash
-        create_home: yes
-        state: present
-      loop: "{{ sql_users }}"
+    - name: Crear tabla de prueba "users" en "testdb"
+      mysql_query:
+        query: |
+          CREATE TABLE IF NOT EXISTS testdb.users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            email VARCHAR(100) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
 
-    - name: Establecer claves SSH para los usuarios
-      authorized_key:
-        user: "{{ item.name }}"
-        key: "ssh-rsa CuentasSQL1853"
+    - name: Insertar datos de prueba en la tabla "users"
+      mysql_query:
+        query: |
+          INSERT INTO testdb.users (name, email)
+          VALUES ('John Doe', 'john.doe@example.com'),
+                  ('Jane Smith', 'jane.smith@example.com'),
+                  ('Emily Johnson', 'emily.johnson@example.com');
+
+    - name: Crear base de datos "mydb"
+      mysql_db:
+        name: mydb
         state: present
-      loop: "{{ sql_users }}"
+
+    - name: Crear usuario con todos los privilegios en testdb
+      mysql_user:
+        name: myuser
+        password: securepassword
+        host: "%"
+        priv: "testdb.*:ALL"
+        state: present
+
+    - name: Crear usuario solo lectura en testdb
+      mysql_user:
+        name: mysql_user2
+        password: readpassword
+        host: "%"
+        priv: "testdb.*:SELECT"
+        state: present
+
+    - name: Crear usuario solo escritura en testdb
+      mysql_user:
+        name: mysql_user3
+        password: writepassword
+        host: "%"
+        priv: "testdb.*:INSERT,UPDATE"
+        state: present
 
     - name: Instalar fail2ban
       apt:
         name: fail2ban
+        state: present
+
+    - name: Crear grupo de administración ACL para usuarios de MySQL
+      group:
+        name: mysqladmins
         state: present
 
     - name: Configurar archivo seguro para exportaciones en MySQL

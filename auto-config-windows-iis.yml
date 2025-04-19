@@ -16,27 +16,14 @@
     - name: Instalar funciones requeridas para IIS y compatibilidad web
       win_feature:
         name:
-          - Web-Server
-          - Web-WebServer
-          - Web-Common-Http
-          - Web-Default-Doc
-          - Web-Dir-Browsing
-          - Web-Http-Errors
-          - Web-Static-Content
-          - Web-Http-Redirect
-          - Web-Health
-          - Web-Http-Logging
-          - Web-Log-Libraries
-          - Web-Request-Monitor
-          - Web-Filtering
-          - Web-Performance
-          - Web-Stat-Compression
-          - Web-Security
-          - Web-Basic-Auth
-          - Web-Windows-Auth
-          - Web-App-Dev
-          - Web-Asp-Net45
-          - Web-Net-Ext45
+          - Web-Server             # Servidor IIS
+          - Web-WebServer          # Servicios Web del IIS
+          - Web-Common-Http        # Funciones HTTP comunes
+          - Web-Default-Doc        # Documento predeterminado
+          - Web-Static-Content     # Contenido estático
+          - Web-Http-Errors        # Páginas de error HTTP
+          - Web-Http-Logging       # Registro HTTP
+          - Web-Security           # Seguridad básica de IIS
         state: present
         include_management_tools: yes
 
@@ -85,14 +72,14 @@
         state: present
 
     - name: Configurar la auditoría de IIS
-      win_audit_policy:
+      win_audit_policy_system:
         category: Logon/Logoff
         subcategory: Logon/Logoff Events
         policy: Success and Failure
         state: enabled
 
     - name: Configurar políticas de auditoría de acceso a archivos
-      win_audit_policy:
+      win_audit_policy_system:
         category: Object Access
         subcategory: File System
         policy: Success and Failure
@@ -166,13 +153,12 @@
         protocol: TCP
         state: present
 
-    - name: Configurar registro de logs detallados de IIS (para eventos y errores)
-      win_iis_logging:
-        state: enabled
-        log_format: W3C
-        log_file_directory: "{{ logs_dir }}"
-        log_file_truncation: true
-        log_period: Daily
+    - name: Configurar registro de logs detallados de IIS (PowerShell)
+      win_shell: |
+        Import-Module WebAdministration
+        Set-ItemProperty "IIS:\Sites\{{ site_name }}" -Name logFile.directory -Value "{{ logs_dir }}"
+        Set-ItemProperty "IIS:\Sites\{{ site_name }}" -Name logFile.period -Value Daily
+        Set-ItemProperty "IIS:\Sites\{{ site_name }}" -Name logFile.logFormat -Value W3C
 
   handlers:
     - name: Reiniciar IIS
