@@ -18,6 +18,9 @@ sudo snap install aws-cli --classic
 aws configure set region us-east-1
 aws configure set output json
 
+#Ansible Galaxy Collection Windows.ad
+ansible-galaxy collection install microsoft.ad --force
+
 # Clonar el repositorio de Git
 cd /home/ubuntu
 git clone https://github.com/DxChrIs/Gestion-y-Automatizacion-de-Servidores.git

@@ -36,25 +36,25 @@
         reboot: yes
 
     - name: Crear Organizational Unit (OU) para Usuarios
-      microsoft.ad.organizational_unit:
+      microsoft.ad.ou:
         name: "Users"
         path: "DC=corp,DC=local"
         state: present
 
     - name: Crear Organizational Unit (OU) para Grupos
-      microsoft.ad.organizational_unit:
+      microsoft.ad.ou:
         name: "Groups"
         path: "DC=corp,DC=local"
         state: present
 
     - name: Crear Organizational Unit (OU) para Computadoras
-      microsoft.ad.organizational_unit:
+      microsoft.ad.ou:
         name: "Computers"
         path: "DC=corp,DC=local"
         state: present
 
     - name: Crear Organizational Unit (OU) para IT
-      microsoft.ad.organizational_unit:
+      microsoft.ad.ou:
         name: "IT"
         path: "DC=corp,DC=local"
         state: present
@@ -155,7 +155,7 @@
         state: present
 
     - name: Delegar permisos sobre la OU IT
-      microsoft.ad.organizational_unit:
+      microsoft.ad.ou:
         name: "IT"
         path: "DC=corp,DC=local"
         delegate_permissions:
@@ -164,7 +164,7 @@
         state: present
 
     - name: Asignar permisos de delegación a OU de usuarios
-      microsoft.ad.organizational_unit:
+      microsoft.ad.ou:
         name: "Users"
         path: "DC=corp,DC=local"
         delegate_permissions:
