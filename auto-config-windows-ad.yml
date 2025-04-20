@@ -8,14 +8,14 @@
     - microsoft.ad
 
   vars:
-    domain_name: corp.local
-    netbios_name: CORP
+    domain_name: chrisyjaime.local
+    netbios_name: CJ_DC
     safe_mode_password: 'ChrisAdmin1853'
     admin_group: "Domain Admins"
-    ou_users: "OU=Users,DC=corp,DC=local"
-    ou_groups: "OU=Groups,DC=corp,DC=local"
-    ou_computers: "OU=Computers,DC=corp,DC=local"
-    ou_it: "OU=IT,DC=corp,DC=local"
+    ou_users: "OU=Users,DC=chrisyjaime,DC=local"
+    ou_groups: "OU=Groups,DC=chrisyjaime,DC=local"
+    ou_computers: "OU=Computers,DC=chrisyjaime,DC=local"
+    ou_it: "OU=IT,DC=chrisyjaime,DC=local"
     password_policy_min_length: 12
     password_policy_complexity: yes
     password_policy_history: 24
@@ -28,35 +28,37 @@
         include_management_tools: yes
 
     - name: Promocionar el servidor a controlador de dominio (si no lo es ya)
-      microsoft.ad.domain:
+      win_domain:
         dns_domain_name: "{{ domain_name }}"
         domain_netbios_name: "{{ netbios_name }}"
         safe_mode_password: "{{ safe_mode_password }}"
+        create_dns_delegation: yes
+        install_dns: yes
         state: domain_controller
         reboot: yes
 
     - name: Crear Organizational Unit (OU) para Usuarios
       microsoft.ad.ou:
         name: "Users"
-        path: "DC=corp,DC=local"
+        path: "DC=chrisyjaime,DC=local"
         state: present
 
     - name: Crear Organizational Unit (OU) para Grupos
       microsoft.ad.ou:
         name: "Groups"
-        path: "DC=corp,DC=local"
+        path: "DC=chrisyjaime,DC=local"
         state: present
 
     - name: Crear Organizational Unit (OU) para Computadoras
       microsoft.ad.ou:
         name: "Computers"
-        path: "DC=corp,DC=local"
+        path: "DC=chrisyjaime,DC=local"
         state: present
 
     - name: Crear Organizational Unit (OU) para IT
       microsoft.ad.ou:
         name: "IT"
-        path: "DC=corp,DC=local"
+        path: "DC=chrisyjaime,DC=local"
         state: present
 
     - name: Crear grupo de seguridad local "Administradores"

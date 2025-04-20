@@ -20,6 +20,7 @@ aws configure set output json
 
 #Ansible Galaxy Collection Windows.ad
 ansible-galaxy collection install microsoft.ad --force
+ansible-galaxy collection install community.windows --force
 
 # Clonar el repositorio de Git
 cd /home/ubuntu
