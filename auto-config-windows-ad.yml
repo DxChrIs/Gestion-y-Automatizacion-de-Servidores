@@ -5,6 +5,7 @@
 
   collections:
     - community.windows
+    - microsoft.ad
 
   vars:
     domain_name: corp.local
