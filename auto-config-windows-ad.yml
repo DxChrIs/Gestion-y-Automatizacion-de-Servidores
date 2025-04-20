@@ -119,73 +119,56 @@
         groups:
           - "Users"
 
-    - name: Configurar la política de contraseñas de Active Directory
-      win_domain_password_policy:
-        minimum_password_length: "{{ password_policy_min_length }}"
-        password_complexity_enabled: "{{ password_policy_complexity }}"
-        password_history_size: "{{ password_policy_history }}"
+    - name: Configurar política de longitud mínima de contraseña
+      win_shell: net accounts /minpwlen:{{ password_policy_min_length }}
+
+    - name: Configurar historial de contraseñas
+      win_shell: net accounts /uniquepw:{{ password_policy_history }}
+
+    - name: Habilitar complejidad de contraseñas
+      win_regedit:
+        path: HKLM\SYSTEM\CurrentControlSet\Control\Lsa
+        name: PasswordComplexity
+        data: "{{ 1 if password_policy_complexity else 0 }}"
+        type: dword
         state: present
 
-    - name: Configurar política de bloqueo de cuenta
-      win_domain_lockout_policy:
-        lockout_threshold: 5
-        lockout_duration: 15
-        lockout_counter_reset: 15
-        state: present
+    - name: Configurar política de bloqueo de cuenta - intentos fallidos
+      win_shell: net accounts /lockoutthreshold:5
 
-    - name: Configurar Auditoría de Active Directory
+    - name: Configurar política de bloqueo de cuenta - duración
+      win_shell: net accounts /lockoutduration:15
+
+    - name: Configurar política de bloqueo de cuenta - restablecer contador
+      win_shell: net accounts /lockoutwindow:15
+
+    - name: Configurar Auditoría de inicio/cierre de sesión
       win_audit_policy_system:
         category: Logon/Logoff
-        subcategory: Logon/Logoff Events
-        policy: Success and Failure
-        state: enabled
+        subcategory: Logon
+        audit_type: Success,Failure
 
     - name: Configurar Auditoría de acceso a objetos (Archivos)
       win_audit_policy_system:
         category: Object Access
         subcategory: File System
-        policy: Success and Failure
-        state: enabled
+        audit_type: Success,Failure
 
-    - name: Establecer tiempo de inactividad de sesión para bloquear la cuenta
-      win_user_right:
+    - name: Establecer usuarios con denegación de inicio de sesión interactivo
+      ansible.windows.win_user_right:
         name: SeDenyInteractiveLogonRight
         users:
-          - "User1"  # Ejemplo de usuario
-        state: present
-
-    - name: Delegar permisos sobre la OU IT
-      microsoft.ad.ou:
-        name: "IT"
-        path: "DC=corp,DC=local"
-        delegate_permissions:
-          - "Create/Delete Computer Objects"
-          - "Reset Password"
-        state: present
-
-    - name: Asignar permisos de delegación a OU de usuarios
-      microsoft.ad.ou:
-        name: "Users"
-        path: "DC=corp,DC=local"
-        delegate_permissions:
-          - "Create User"
-          - "Delete User"
+          - "User1"
         state: present
 
     - name: Configurar auditoría de acceso a cuentas de usuario
       win_audit_policy_system:
         category: Account Logon
         subcategory: Special Logon
-        policy: Success and Failure
-        state: enabled
+        audit_type: Success,Failure
 
-    - name: Configurar directiva de expiración de contraseñas
-      win_domain_password_policy:
-        maximum_password_age: 60
-        state: present
+    - name: Configurar máxima expiración de contraseña
+      win_shell: net accounts /maxpwage:60
 
-    - name: Configurar la directiva de cuenta de contraseñas nunca expira
-      microsoft.ad.user:
-        name: "user1"
-        password_never_expires: yes
-        state: present
+    - name: Configurar usuario para que su contraseña nunca expire
+      win_shell: net user user1 /passwordchg:yes /passwordreq:yes /expires:never
