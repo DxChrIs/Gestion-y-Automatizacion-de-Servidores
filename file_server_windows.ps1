@@ -1,5 +1,5 @@
 <powershell>
-    Start-Transcript -Path "C:/iis_server_windows.txt" -Append
+    Start-Transcript -Path "C:/file_server_windows.txt" -Append
     #Enable Powershell remoting
     Enable-PSRemoting -Force
     #Set WinRM service startup type to automatic
