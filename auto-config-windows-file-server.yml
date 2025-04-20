@@ -78,21 +78,18 @@
         state: present
 
     - name: Aplicar auditoría de acceso a la carpeta compartida
-      win_audit_policy:
+      win_audit_policy_system:
         category: Object Access
         subcategory: File System
         policy: Success and Failure
         state: enabled
 
-    - name: Configurar la auditoría de acceso a la carpeta compartida
-      win_file_audit:
-        path: "{{ shared_folder_path }}"
-        audit:
-          - "Success"
-          - "Failure"
-        users:
-          - "Everyone"
-        state: present
+    - name: Configurar auditoría de acceso a la carpeta compartida con PowerShell
+      win_shell: |
+        $acl = Get-Acl -Path "{{ shared_folder_path }}"
+        $auditRule = New-Object System.Security.AccessControl.FileSystemAuditRule("Everyone", "Read, Write", "Success, Failure")
+        $acl.AddAuditRule($auditRule)
+        Set-Acl -Path "{{ shared_folder_path }}" -AclObject $acl
 
     - name: Habilitar control de acceso de usuarios y grupos para recursos compartidos
       win_acl:

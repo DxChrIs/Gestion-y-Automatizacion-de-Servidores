@@ -38,18 +38,18 @@
         sysvol_path: "C:\\Windows\\SYSVOL"
         database_path: "C:\\Windows\\NTDS"
         log_path: "C:\\Windows\\NTDS"
-        domain_mode: "Win2016"
-        forest_mode: "Win2016"
+        domain_mode: "Default"
+        forest_mode: "Default"
 
     - name: Crear Organizational Unit (OU) para Usuarios
       microsoft.ad.ou:
-        name: "Users"
+        name: "Empleados"
         path: "DC=chrisyjaime,DC=local"
         state: present
 
     - name: Crear Organizational Unit (OU) para Grupos
       microsoft.ad.ou:
-        name: "Groups"
+        name: ""
         path: "DC=chrisyjaime,DC=local"
         state: present
 
