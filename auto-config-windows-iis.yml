@@ -16,14 +16,14 @@
     - name: Instalar funciones requeridas para IIS y compatibilidad web
       win_feature:
         name:
-          - Web-Server             # Servidor IIS
-          - Web-WebServer          # Servicios Web del IIS
-          - Web-Common-Http        # Funciones HTTP comunes
-          - Web-Default-Doc        # Documento predeterminado
-          - Web-Static-Content     # Contenido estático
-          - Web-Http-Errors        # Páginas de error HTTP
-          - Web-Http-Logging       # Registro HTTP
-          - Web-Security           # Seguridad básica de IIS
+          - Web-Server
+          - Web-WebServer
+          - Web-Common-Http
+          - Web-Default-Doc
+          - Web-Static-Content
+          - Web-Http-Errors
+          - Web-Http-Logging
+          - Web-Security
         state: present
         include_management_tools: yes
 
@@ -52,9 +52,6 @@
         physical_path: "{{ site_path }}"
         hostname: ""
         ip: "*"
-        parameters:
-          - name: logfile.directory
-            value: "{{ logs_dir }}"
 
     - name: Asegurar que el servicio de IIS está iniciado
       win_service:
@@ -90,9 +87,10 @@
         if (!(Test-Path -Path "{{ backup_dir }}")) {
           New-Item -Path "{{ backup_dir }}" -ItemType Directory
         }
-        Export-IISConfiguration -Path "{{ backup_dir }}\\IIS_Config_Backup_$(date +'%Y%m%d').xml"
+        cd C:\Windows\System32\inetsrv
+        .\appcmd.exe add backup "Backup_$(Get-Date -Format 'yyyyMMdd')"
       args:
-        creates: "{{ backup_dir }}\\IIS_Config_Backup_$(date +'%Y%m%d').xml"
+        executable: powershell
 
     - name: Crear usuario administrativo para IIS
       win_user:
@@ -121,7 +119,7 @@
         name: W3SVC
         state: started
 
-    - name: Configurar el registro de logs de IIS
+    - name: Configurar el registro de logs en IIS (binding)
       win_iis_webbinding:
         name: "{{ site_name }}"
         state: present
@@ -132,8 +130,8 @@
     - name: Crear un script de monitoreo para verificar el estado del sitio
       win_copy:
         content: |
-          $status = Test-Connection -ComputerName "localhost" -Port 80 -Count 1
-          if ($status.StatusCode -eq 0) {
+          $status = Invoke-WebRequest -Uri "http://localhost" -UseBasicParsing
+          if ($status.StatusCode -eq 200) {
             Write-Output "El sitio web está funcionando correctamente."
           } else {
             Write-Output "Error al acceder al sitio web."
@@ -159,6 +157,8 @@
         Set-ItemProperty "IIS:\Sites\{{ site_name }}" -Name logFile.directory -Value "{{ logs_dir }}"
         Set-ItemProperty "IIS:\Sites\{{ site_name }}" -Name logFile.period -Value Daily
         Set-ItemProperty "IIS:\Sites\{{ site_name }}" -Name logFile.logFormat -Value W3C
+      args:
+        executable: powershell
 
   handlers:
     - name: Reiniciar IIS
