@@ -43,8 +43,7 @@ done
 
 echo "[sql]" > inventory_sql.ini
 grep -v "$MY_IP" sql_ips.txt | while read ip; do
-    echo "$ip ansible_user=ubuntu ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_private_key_file=/home/ubuntu/ssh-code.pem ansible_python_interpreter=/usr/bin/python3.12" 
-    >> inventory_sql.ini
+    echo "$ip ansible_user=ubuntu ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_private_key_file=/home/ubuntu/ssh-code.pem ansible_python_interpreter=/usr/bin/python3" >> inventory_sql.ini
 done
 
 # Esperar 120 segundos (esto podría depender de tu caso específico)
