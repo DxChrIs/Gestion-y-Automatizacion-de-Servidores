@@ -34,12 +34,12 @@
         safe_mode_password: "{{ safe_mode_password }}"
         create_dns_delegation: no
         install_dns: yes
-        state: domain_controller
         reboot: yes
-
-    - name: Reiniciar servidor después de promoción a DC
-      ansible.windows.win_reboot:
-        reboot_timeout: 600
+        sysvol_path: "C:\\Windows\\SYSVOL"
+        database_path: "C:\\Windows\\NTDS"
+        log_path: "C:\\Windows\\NTDS"
+        domain_mode: "Win2016"
+        forest_mode: "Win2016"
 
     - name: Crear Organizational Unit (OU) para Usuarios
       microsoft.ad.ou:
