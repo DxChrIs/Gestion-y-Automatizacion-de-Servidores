@@ -132,14 +132,12 @@
         state: present
 
     - name: Crear script de backup de la carpeta compartida
-      win_file:
-        path: 'C:\Backup\Backup_Script.bat'
-        state: touch
+      win_copy:
         content: |
           @echo off
           robocopy "{{ shared_folder_path }}" "C:\Backup" /E /COPYALL /R:5 /W:5
           echo Backup completado el %date% %time% >> "C:\Backup\backup_log.txt"
-      mode: '0755'
+        dest: 'C:\Backup\Backup_Script.bat'
 
     - name: Crear tarea programada para realizar backup de la carpeta compartida
       win_scheduled_task:
@@ -158,14 +156,9 @@
           - full_control
         state: query
 
-    - name: Aplicar configuración de firewall para permitir acceso SMB
-      win_firewall_rule:
-        name: "Allow SMB Inbound"
-        localport: 445
-        protocol: TCP
-        action: allow
-        direction: inbound
-        enabled: yes
+    - name: Permitir acceso SMB en el firewall
+      win_shell: |
+        New-NetFirewallRule -DisplayName "Allow SMB Inbound" -Direction Inbound -Protocol TCP -LocalPort 445 -Action Allow
 
     - name: Configurar notificación por correo en caso de fallo de backup
       win_scheduled_task:
