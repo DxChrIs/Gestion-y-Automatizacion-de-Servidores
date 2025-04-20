@@ -3,6 +3,11 @@
   hosts: windows
   gather_facts: no
 
+  collections:
+    - ansible.windows
+    - community.windows
+    - microsoft.ad
+
   vars:
     shared_folder_path: 'C:\Compartido'
     share_name: "Publico"
@@ -99,12 +104,10 @@
           - read
         state: present
 
-    - name: Establecer políticas de acceso para el recurso compartido "Publico"
-      win_share_permission:
-        name: "{{ share_name }}"
-        account: "Everyone"
-        permission: read
-        state: present
+    - name: Establecer permisos de recurso compartido "Publico" para Everyone (lectura)
+      win_shell: |
+        $acl = Get-SmbShareAccess -Name "{{ share_name }}"
+        Grant-SmbShareAccess -Name "{{ share_name }}" -AccountName "Everyone" -AccessRight Read -Force
 
     - name: Crear un grupo de seguridad de acceso restringido "RestrictedAccess"
       win_group:

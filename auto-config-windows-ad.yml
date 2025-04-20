@@ -4,6 +4,7 @@
   gather_facts: no
 
   collections:
+    - ansible.windows
     - community.windows
     - microsoft.ad
 
