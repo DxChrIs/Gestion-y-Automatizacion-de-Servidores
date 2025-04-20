@@ -12,8 +12,8 @@
     shared_folder_path: 'C:\Compartido'
     share_name: "Publico"
     share_description: "Carpeta pública para compartir archivos"
-    domain_name: corp.local
-    admin_group: "Domain Admins"
+    domain_name: chrisyjaime.local
+    admin_group: "Administrators"
     file_audit_group: "FileAuditors"
     users:
       - name: "user1"
