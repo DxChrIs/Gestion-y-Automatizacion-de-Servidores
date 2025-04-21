@@ -88,7 +88,7 @@
         state: present
 
     - name: Agregar usuario1 al grupo "RestrictedAccess"
-      microsoft.ad.group_membership:
+      win_group_membership:
         name: "{{ restricted_group }}"
         members:
           - "user1"
