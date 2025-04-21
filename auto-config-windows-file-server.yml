@@ -34,8 +34,9 @@
     - name: Crear zona directa primaria
       win_dns_zone:
         name: "{{ dns_zone_name }}"
-        type: Primary
-        dynamic_update: None
+        type: primary
+        dynamic_update: "Secure"
+        replication: "Forest"
         state: present
 
     - name: Crear zona inversa primaria
