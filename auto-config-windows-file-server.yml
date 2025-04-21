@@ -122,7 +122,7 @@
         state: present
 
     - name: Permitir acceso SMB en el firewall
-      ansible.windows.win_firewall_rule:
+      community.windows.win_firewall_rule:
         name: "Allow SMB Inbound"
         localport: 445
         action: allow
