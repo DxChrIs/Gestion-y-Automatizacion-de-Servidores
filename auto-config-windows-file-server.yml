@@ -78,8 +78,7 @@
       ansible.windows.win_acl:
         path: "{{ shared_folder_path }}"
         user: "{{ admin_group }}"
-        rights:
-          - full
+        rights: FullControl
         type: allow
         state: present
 
@@ -87,8 +86,7 @@
       ansible.windows.win_acl:
         path: "{{ shared_folder_path }}"
         user: "{{ file_audit_group }}"
-        rights:
-          - read
+        rights: Read
         type: allow
         state: present
 
@@ -109,8 +107,7 @@
       ansible.windows.win_acl:
         path: "{{ shared_folder_path }}"
         user: "{{ restricted_group }}"
-        rights:
-          - read
+        rights: Read
         type: allow
         state: present
 
