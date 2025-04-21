@@ -55,7 +55,7 @@
     - name: Crear usuarios en Active Directory
       microsoft.ad.user:
         name: "{{ item.name }}"
-        given_name: "{{ item.full_name.split(' ')[0] }}"
+        firstname: "{{ item.full_name.split(' ')[0] }}"
         surname: "{{ item.full_name.split(' ')[1] }}"
         password: "{{ item.password }}"
         groups:
