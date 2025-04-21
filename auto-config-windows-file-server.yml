@@ -46,10 +46,8 @@
         read: "Everyone"
 
     - name: Crear grupo de seguridad para auditoría de archivos
-      microsoft.ad.group:
+      win_group:
         name: "{{ file_audit_group }}"
-        category: "Security"
-        scope: "Global"
         state: present
 
     - name: Crear usuarios en Active Directory
