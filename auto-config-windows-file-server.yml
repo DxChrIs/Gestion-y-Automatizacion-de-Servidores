@@ -52,16 +52,25 @@
         scope: global
         state: present
 
-    - name: Crear usuarios en Active Directory
+    - name: Crear usuario user1 en Active Directory
       microsoft.ad.user:
-        name: "{{ item.name }}"
-        firstname: "{{ item.full_name.split(' ')[0] }}"
-        surname: "{{ item.full_name.split(' ')[1] }}"
-        password: "{{ item.password }}"
+        name: "{{ users[0].name }}"
+        firstname: "{{ users[0].full_name.split(' ')[0] }}"
+        surname: "{{ users[0].full_name.split(' ')[1] }}"
+        password: "{{ users[0].password }}"
         groups:
-          - "{{ item.group }}"
+          - "{{ users[0].group }}"
         state: present
-      loop: "{{ users }}"
+
+    - name: Crear usuario user2 en Active Directory
+      microsoft.ad.user:
+        name: "{{ users[1].name }}"
+        firstname: "{{ users[1].full_name.split(' ')[0] }}"
+        surname: "{{ users[1].full_name.split(' ')[1] }}"
+        password: "{{ users[1].password }}"
+        groups:
+          - "{{ users[1].group }}"
+        state: present
 
     - name: Asignar permisos de control total a Administrators
       ansible.windows.win_acl:
