@@ -46,7 +46,7 @@
         read: "Everyone"
 
     - name: Crear grupo de seguridad para auditoría de archivos
-      win_domain_group:
+      microsoft.ad.group:
         name: "{{ file_audit_group }}"
         category: "Security"
         scope: "Global"
