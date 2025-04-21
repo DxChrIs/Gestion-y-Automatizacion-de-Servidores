@@ -59,7 +59,7 @@
         surname: "{{ users[0].full_name.split(' ')[1] }}"
         password: "{{ users[0].password }}"
         groups:
-          - "{{ users[0].group }}"
+          - "Users"
         state: present
 
     - name: Crear usuario user2 en Active Directory
@@ -69,7 +69,7 @@
         surname: "{{ users[1].full_name.split(' ')[1] }}"
         password: "{{ users[1].password }}"
         groups:
-          - "{{ users[1].group }}"
+          - "Users"
         state: present
 
     - name: Asignar permisos de control total a Administrators
