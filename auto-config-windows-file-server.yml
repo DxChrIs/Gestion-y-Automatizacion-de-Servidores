@@ -1,172 +1,91 @@
 ---
-- name: Configurar servidor de archivos en Windows Server 2022
+- name: DNS avanzado en Windows Server 2022
   hosts: windows
   gather_facts: no
 
   collections:
     - ansible.windows
     - community.windows
-    - microsoft.ad
 
   vars:
-    shared_folder_path: 'C:\Compartido'
-    share_name: "Publico"
-    share_description: "Carpeta pública para compartir archivos"
-    domain_name: chrisyjaime.local
-    admin_group: "Administrators"
-    file_audit_group: "FileAuditors"
-    users:
-      - name: "user1"
-        full_name: "User One"
-        password: "SecurePassword123"
-        group: "Users"
-      - name: "user2"
-        full_name: "User Two"
-        password: "SecurePassword456"
-        group: "Users"
+    dns_zone_name: "chrisyjaime.local"
+    reverse_zone_name: "0.0.10.in-addr.arpa"
+    dns_zone_file: "chrisyjaime.local.dns"
+    reverse_zone_file: "10.0.0.rev"
+    dns_forwarders:
+      - "8.8.8.8"
+      - "1.1.1.1"
+    dns_records:
+      - name: "web"
+        ip: "10.0.0.10"
+      - name: "db"
+        ip: "10.0.0.11"
+      - name: "fileshare"
+        ip: "10.0.0.12"
 
   tasks:
-    - name: Instalar rol de File Server
+
+    - name: Instalar rol de DNS Server
       win_feature:
-        name: FS-FileServer
+        name: DNS
         state: present
         include_management_tools: yes
 
-    - name: Crear carpeta compartida
-      win_file:
-        path: "{{ shared_folder_path }}"
-        state: directory
-
-    - name: Crear recurso compartido "Publico"
-      win_share:
-        name: "{{ share_name }}"
-        path: "{{ shared_folder_path }}"
-        description: "{{ share_description }}"
-        full: "{{ admin_group }}"
-        read: "Everyone"
-
-    - name: Crear grupo de seguridad para auditoría de archivos
-      win_group:
-        name: "{{ file_audit_group }}"
+    - name: Crear zona directa primaria
+      win_dns_zone:
+        name: "{{ dns_zone_name }}"
+        type: Primary
+        dynamic_update: None
+        zone_file: "{{ dns_zone_file }}"
         state: present
 
-    - name: Crear usuarios en Active Directory
-      win_user:
+    - name: Crear zona inversa primaria
+      win_dns_zone:
+        name: "{{ reverse_zone_name }}"
+        type: Primary
+        dynamic_update: None
+        zone_file: "{{ reverse_zone_file }}"
+        state: present
+        is_reverse_lookup_zone: yes
+
+    - name: Agregar registros A en la zona directa
+      win_dns_record:
+        zone: "{{ dns_zone_name }}"
         name: "{{ item.name }}"
-        given_name: "{{ item.full_name.split(' ')[0] }}"
-        surname: "{{ item.full_name.split(' ')[1] }}"
-        full_name: "{{ item.full_name }}"
-        password: "{{ item.password }}"
+        type: A
+        value: "{{ item.ip }}"
         state: present
-        user_cannot_change_password: no
-        password_never_expires: no
-        groups:
-          - "{{ item.group }}"
-      loop: "{{ users }}"
+      loop: "{{ dns_records }}"
 
-    - name: Asignar permisos avanzados a la carpeta compartida
-      win_acl:
-        path: "{{ shared_folder_path }}"
-        user: "{{ admin_group }}"
-        permissions:
-          - full_control
+    - name: Agregar registros PTR en la zona inversa
+      win_dns_record:
+        zone: "{{ reverse_zone_name }}"
+        name: "{{ item.ip.split('.')[3] }}"
+        type: PTR
+        value: "{{ item.name }}.{{ dns_zone_name }}"
         state: present
+      loop: "{{ dns_records }}"
 
-    - name: Asignar permisos de lectura a los usuarios en la carpeta compartida
-      win_acl:
-        path: "{{ shared_folder_path }}"
-        user: "{{ file_audit_group }}"
-        permissions:
-          - read
-        state: present
+    - name: Configurar reenviadores DNS
+      win_dns_client:
+        interface_alias: "Ethernet"
+        dns_servers: "{{ dns_forwarders }}"
+        register: dns_config
 
-    - name: Aplicar auditoría de acceso a la carpeta compartida
-      win_audit_policy_system:
-        category: Object Access
-        subcategory: File System
-        policy: Success and Failure
-        state: enabled
-
-    - name: Configurar auditoría de acceso a la carpeta compartida con PowerShell
-      win_shell: |
-        $acl = Get-Acl -Path "{{ shared_folder_path }}"
-        $auditRule = New-Object System.Security.AccessControl.FileSystemAuditRule("Everyone", "Read, Write", "Success, Failure")
-        $acl.AddAuditRule($auditRule)
-        Set-Acl -Path "{{ shared_folder_path }}" -AclObject $acl
-
-    - name: Habilitar control de acceso de usuarios y grupos para recursos compartidos
-      win_acl:
-        path: "{{ shared_folder_path }}"
-        user: "Everyone"
-        permissions:
-          - read
+    - name: Permitir tráfico DNS TCP por firewall
+      win_firewall_rule:
+        name: "Allow DNS TCP"
+        localport: 53
+        action: allow
+        direction: in
+        protocol: TCP
         state: present
 
-    - name: Establecer permisos de recurso compartido "Publico" para Everyone (lectura)
-      win_shell: |
-        $acl = Get-SmbShareAccess -Name "{{ share_name }}"
-        Grant-SmbShareAccess -Name "{{ share_name }}" -AccountName "Everyone" -AccessRight Read -Force
-
-    - name: Crear un grupo de seguridad de acceso restringido "RestrictedAccess"
-      win_group:
-        name: "RestrictedAccess"
-        domain: "{{ domain_name }}"
-        group_scope: "Global"
-        state: present
-
-    - name: Agregar usuario a grupo de acceso restringido "RestrictedAccess"
-      win_group_membership:
-        name: "RestrictedAccess"
-        members:
-          - "user1"
-        state: present
-
-    - name: Configurar que el grupo "RestrictedAccess" solo tenga acceso de lectura
-      win_acl:
-        path: "{{ shared_folder_path }}"
-        user: "RestrictedAccess"
-        permissions:
-          - read
-        state: present
-
-    - name: Crear script de backup de la carpeta compartida
-      win_copy:
-        content: |
-          @echo off
-          robocopy "{{ shared_folder_path }}" "C:\Backup" /E /COPYALL /R:5 /W:5
-          echo Backup completado el %date% %time% >> "C:\Backup\backup_log.txt"
-        dest: 'C:\Backup\Backup_Script.bat'
-
-    - name: Crear tarea programada para realizar backup de la carpeta compartida
-      win_scheduled_task:
-        name: "Backup_Carpeta_Compartida"
-        actions:
-          - path: 'C:\Backup\Backup_Script.bat'
-        trigger:
-          - type: daily
-            start_boundary: '2022-12-01T02:00:00'
-        state: present
-
-    - name: Verificar si los permisos de acceso de la carpeta compartida son correctos
-      win_acl:
-        path: "{{ shared_folder_path }}"
-        permissions:
-          - full_control
-        state: query
-
-    - name: Permitir acceso SMB en el firewall
-      win_shell: |
-        New-NetFirewallRule -DisplayName "Allow SMB Inbound" -Direction Inbound -Protocol TCP -LocalPort 445 -Action Allow
-
-    - name: Configurar notificación por correo en caso de fallo de backup
-      win_scheduled_task:
-        name: "Backup_Error_Notification"
-        actions:
-          - path: 'powershell.exe'
-            arguments: |
-              Send-MailMessage -From 'admin@corp.local' -To 'admin@corp.local' -Subject 'Error en el Backup' -Body 'El backup de la carpeta compartida ha fallado.' -SmtpServer 'smtp.corp.local'
-        trigger:
-          - type: eventlog
-            event_log: "Application"
-            event_id: 1001
+    - name: Permitir tráfico DNS UDP por firewall
+      win_firewall_rule:
+        name: "Allow DNS UDP"
+        localport: 53
+        action: allow
+        direction: in
+        protocol: UDP
         state: present
