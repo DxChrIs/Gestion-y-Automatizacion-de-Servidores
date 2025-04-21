@@ -46,10 +46,10 @@
         read: "Everyone"
 
     - name: Crear grupo de seguridad para auditoría de archivos
-      win_group:
+      win_domain_group:
         name: "{{ file_audit_group }}"
-        domain: "{{ domain_name }}"
-        group_scope: "Global"
+        category: "Security"
+        scope: "Global"
         state: present
 
     - name: Crear usuarios en Active Directory
