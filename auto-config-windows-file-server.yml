@@ -1,82 +1,131 @@
-- name: DNS avanzado en Windows Server 2022
+---
+- name: Configurar servidor de archivos en Windows Server 2022 con Active Directory
   hosts: windows
   gather_facts: no
 
   collections:
     - ansible.windows
     - community.windows
+    - microsoft.ad
 
   vars:
-    dns_zone_name: "chrisyjaime.local"
-    reverse_zone_name: "16.0.10.in-addr.arpa"
-    dns_forwarders:
-      - "8.8.8.8"
-      - "1.1.1.1"
-    dns_records:
-      - name: "web"
-        ip: "10.0.16.10"
-      - name: "db"
-        ip: "10.0.16.11"
-      - name: "fileshare"
-        ip: "10.0.16.12"
+    shared_folder_path: 'C:\Compartido'
+    share_name: "Publico"
+    share_description: "Carpeta pública para compartir archivos"
+    domain_name: "chrisyjaime.local"
+    admin_group: "Administrators"
+    file_audit_group: "FileAuditors"
+    restricted_group: "RestrictedAccess"
+    users:
+      - name: "user1"
+        full_name: "User One"
+        password: "SecurePassword123"
+        group: "Users"
+      - name: "user2"
+        full_name: "User Two"
+        password: "SecurePassword456"
+        group: "Users"
 
   tasks:
-
-    - name: Instalar rol de DNS Server
-      win_feature:
-        name: DNS
+    - name: Instalar rol de File Server
+      ansible.windows.win_feature:
+        name: FS-FileServer
         state: present
         include_management_tools: yes
 
-    - name: Crear zona directa primaria
-      win_dns_zone:
-        name: "{{ dns_zone_name }}"
-        type: Primary
+    - name: Crear carpeta compartida
+      ansible.windows.win_file:
+        path: "{{ shared_folder_path }}"
+        state: directory
+
+    - name: Crear recurso compartido "Publico"
+      ansible.windows.win_share:
+        name: "{{ share_name }}"
+        path: "{{ shared_folder_path }}"
+        description: "{{ share_description }}"
+        full: "{{ admin_group }}"
+        read: "Everyone"
+
+    - name: Crear grupo de seguridad para auditoría de archivos
+      microsoft.ad.group:
+        name: "{{ file_audit_group }}"
+        scope: global
         state: present
 
-    - name: Crear zona inversa primaria
-      win_dns_zone:
-        name: "{{ reverse_zone_name }}"
-        type: Primary
-        state: present
-
-    - name: Agregar registros A en la zona directa
-      win_dns_record:
-        zone: "{{ dns_zone_name }}"
+    - name: Crear usuarios en Active Directory
+      microsoft.ad.user:
         name: "{{ item.name }}"
-        type: A
-        value: "{{ item.ip }}"
+        given_name: "{{ item.full_name.split(' ')[0] }}"
+        surname: "{{ item.full_name.split(' ')[1] }}"
+        password: "{{ item.password }}"
+        groups:
+          - "{{ item.group }}"
         state: present
-      loop: "{{ dns_records }}"
+      loop: "{{ users }}"
 
-    - name: Agregar registros PTR en la zona inversa
-      win_dns_record:
-        zone: "{{ reverse_zone_name }}"
-        name: "{{ item.ip.split('.')[3] }}"
-        type: PTR
-        value: "{{ item.name }}.{{ dns_zone_name }}"
+    - name: Asignar permisos de control total a Administrators
+      ansible.windows.win_acl:
+        path: "{{ shared_folder_path }}"
+        user: "{{ admin_group }}"
+        rights:
+          - full
+        type: allow
         state: present
-      loop: "{{ dns_records }}"
 
-    - name: Configurar reenviadores DNS
-      win_dns_client:
-        interface_alias: "Ethernet"
-        dns_servers: "{{ dns_forwarders }}"
+    - name: Asignar permisos de lectura a FileAuditors
+      ansible.windows.win_acl:
+        path: "{{ shared_folder_path }}"
+        user: "{{ file_audit_group }}"
+        rights:
+          - read
+        type: allow
+        state: present
 
-    - name: Permitir tráfico DNS TCP por firewall
-      win_firewall_rule:
-        name: "Allow DNS TCP"
-        localport: 53
+    - name: Crear grupo de acceso restringido "RestrictedAccess"
+      microsoft.ad.group:
+        name: "{{ restricted_group }}"
+        scope: global
+        state: present
+
+    - name: Agregar usuario1 al grupo "RestrictedAccess"
+      microsoft.ad.group_membership:
+        name: "{{ restricted_group }}"
+        members:
+          - "user1"
+        state: present
+
+    - name: Asignar permisos de lectura a "RestrictedAccess"
+      ansible.windows.win_acl:
+        path: "{{ shared_folder_path }}"
+        user: "{{ restricted_group }}"
+        rights:
+          - read
+        type: allow
+        state: present
+
+    - name: Crear script de backup de la carpeta compartida
+      ansible.windows.win_copy:
+        content: |
+          @echo off
+          robocopy "{{ shared_folder_path }}" "C:\Backup" /E /COPYALL /R:5 /W:5
+          echo Backup completado el %date% %time% >> "C:\Backup\backup_log.txt"
+        dest: 'C:\Backup\Backup_Script.bat'
+
+    - name: Crear tarea programada para realizar backup de la carpeta compartida
+      ansible.windows.win_scheduled_task:
+        name: "Backup_Carpeta_Compartida"
+        actions:
+          - path: 'C:\Backup\Backup_Script.bat'
+        triggers:
+          - type: daily
+            start_boundary: '2025-04-22T02:00:00'
+        state: present
+
+    - name: Permitir acceso SMB en el firewall
+      ansible.windows.win_firewall_rule:
+        name: "Allow SMB Inbound"
+        localport: 445
         action: allow
         direction: in
         protocol: TCP
-        state: present
-
-    - name: Permitir tráfico DNS UDP por firewall
-      win_firewall_rule:
-        name: "Allow DNS UDP"
-        localport: 53
-        action: allow
-        direction: in
-        protocol: UDP
         state: present
