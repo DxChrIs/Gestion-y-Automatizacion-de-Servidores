@@ -9,7 +9,7 @@
 
   vars:
     dns_zone_name: "chrisyjaime.local"
-    reverse_zone_name: "0.0.10.in-addr.arpa"
+    reverse_zone_name: "16.0.10.in-addr.arpa"
     dns_zone_file: "chrisyjaime.local.dns"
     reverse_zone_file: "10.0.0.rev"
     dns_forwarders:
@@ -17,11 +17,11 @@
       - "1.1.1.1"
     dns_records:
       - name: "web"
-        ip: "10.0.0.10"
+        ip: "10.0.16.10"
       - name: "db"
-        ip: "10.0.0.11"
+        ip: "10.0.16.11"
       - name: "fileshare"
-        ip: "10.0.0.12"
+        ip: "10.0.16.12"
 
   tasks:
 
@@ -40,11 +40,11 @@
 
     - name: Crear zona inversa primaria
       win_dns_zone:
-        name: "{{ reverse_zone_name }}"
-        type: Primary
-        dynamic_update: None
+        name: "16.0.10.in-addr.arpa"
+        type: primary
+        replication: "Forest"
+        dynamic_update: "Secure"
         state: present
-        is_reverse_lookup_zone: yes
 
     - name: Agregar registros A en la zona directa
       win_dns_record:
