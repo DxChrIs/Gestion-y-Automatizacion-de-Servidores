@@ -112,7 +112,7 @@
         dest: 'C:\Backup\Backup_Script.bat'
 
     - name: Crear tarea programada para realizar backup de la carpeta compartida
-      ansible.windows.win_scheduled_task:
+      community.windows.win_scheduled_task:
         name: "Backup_Carpeta_Compartida"
         actions:
           - path: 'C:\Backup\Backup_Script.bat'
