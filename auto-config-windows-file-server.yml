@@ -36,7 +36,6 @@
         name: "{{ dns_zone_name }}"
         type: Primary
         dynamic_update: None
-        zone_file: "{{ dns_zone_file }}"
         state: present
 
     - name: Crear zona inversa primaria
@@ -44,7 +43,6 @@
         name: "{{ reverse_zone_name }}"
         type: Primary
         dynamic_update: None
-        zone_file: "{{ reverse_zone_file }}"
         state: present
         is_reverse_lookup_zone: yes
 
