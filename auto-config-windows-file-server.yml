@@ -99,7 +99,7 @@
     - name: Agregar usuario1 al grupo "RestrictedAccess"
       win_group_membership:
         name: "{{ restricted_group }}"
-        members: "User One"
+        members: "chrisyjaime\\user1"
         state: present
 
     - name: Asignar permisos de lectura a "RestrictedAccess"
