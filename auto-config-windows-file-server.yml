@@ -1,4 +1,3 @@
----
 - name: DNS avanzado en Windows Server 2022
   hosts: windows
   gather_facts: no
@@ -10,8 +9,6 @@
   vars:
     dns_zone_name: "chrisyjaime.local"
     reverse_zone_name: "16.0.10.in-addr.arpa"
-    dns_zone_file: "chrisyjaime.local.dns"
-    reverse_zone_file: "10.0.0.rev"
     dns_forwarders:
       - "8.8.8.8"
       - "1.1.1.1"
@@ -34,17 +31,13 @@
     - name: Crear zona directa primaria
       win_dns_zone:
         name: "{{ dns_zone_name }}"
-        type: primary
-        dynamic_update: "Secure"
-        replication: "Forest"
+        type: Primary
         state: present
 
     - name: Crear zona inversa primaria
       win_dns_zone:
-        name: "16.0.10.in-addr.arpa"
-        type: primary
-        replication: "Forest"
-        dynamic_update: "Secure"
+        name: "{{ reverse_zone_name }}"
+        type: Primary
         state: present
 
     - name: Agregar registros A en la zona directa
@@ -69,7 +62,6 @@
       win_dns_client:
         interface_alias: "Ethernet"
         dns_servers: "{{ dns_forwarders }}"
-        register: dns_config
 
     - name: Permitir tráfico DNS TCP por firewall
       win_firewall_rule:
