@@ -147,12 +147,3 @@
           - type: daily
             start_boundary: '2025-04-22T02:00:00'
         state: present
-
-    - name: Permitir acceso SMB en el firewall
-      community.windows.win_firewall_rule:
-        name: "Allow SMB Inbound"
-        localport: 445
-        action: allow
-        direction: in
-        protocol: TCP
-        state: present
