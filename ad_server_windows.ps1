@@ -21,6 +21,24 @@
     Set-Item WSMan:\localhost\Client\TrustedHosts -Value "*" -Force
     #Restart WinRM service to apply changes
     Restart-Service WinRM
+    # Verificar si el servidor ya es un controlador de dominio
+    $dcCheck = Get-ADDomainController -Filter * -ErrorAction SilentlyContinue
+    if ($dcCheck) {
+        Write-Output "Este servidor ya es un controlador de dominio."
+    } else {
+        Write-Output "Este servidor NO es un controlador de dominio. Procediendo con la promoción..."
+        # Instalar los roles necesarios para la promoción del controlador de dominio
+        Install-WindowsFeature AD-Domain-Services -IncludeManagementTools
+        # Importar el módulo de despliegue de AD DS
+        Import-Module ADDSDeployment
+        # Promover el servidor a un controlador de dominio
+        Install-ADDSForest `
+            -DomainName "chrisyjaime.local" `
+            -SafeModeAdministratorPassword (ConvertTo-SecureString "ElAdministrador1853" -AsPlainText -Force) `
+            -InstallDNS `
+            -Force
+        Write-Output "La promoción a controlador de dominio se ha iniciado. El servidor se reiniciará."
+    }
     Stop-Transcript
 </powershell>
 <persist>true</persist>
