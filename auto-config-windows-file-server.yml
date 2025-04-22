@@ -52,7 +52,13 @@
         scope: global
         state: present
 
-    - name: Crear usuario user1 en Active Directory vía PowerShell
+    - name: Verificar si el usuario user1 ya existe
+      ansible.windows.win_shell: |
+        if (Get-ADUser -Filter {SamAccountName -eq '{{ users[0].name }}'}) { exit 0 } else { exit 1 }
+      register: user1_check
+      ignore_errors: true
+
+    - name: Crear usuario user1 en Active Directory si no existe
       ansible.windows.win_shell: |
         $Password = ConvertTo-SecureString "{{ users[0].password }}" -AsPlainText -Force
         New-ADUser -Name "{{ users[0].name }}" `
@@ -62,8 +68,15 @@
                   -AccountPassword $Password `
                   -Enabled $true `
                   -Path "CN=Users,DC=chrisyjaime,DC=local"
+      when: user1_check.rc != 0
 
-    - name: Crear usuario user2 en Active Directory vía PowerShell
+    - name: Verificar si el usuario user2 ya existe
+      ansible.windows.win_shell: |
+        if (Get-ADUser -Filter {SamAccountName -eq '{{ users[1].name }}'}) { exit 0 } else { exit 1 }
+      register: user2_check
+      ignore_errors: true
+
+    - name: Crear usuario user2 en Active Directory si no existe
       ansible.windows.win_shell: |
         $Password = ConvertTo-SecureString "{{ users[1].password }}" -AsPlainText -Force
         New-ADUser -Name "{{ users[1].name }}" `
@@ -73,6 +86,7 @@
                   -AccountPassword $Password `
                   -Enabled $true `
                   -Path "CN=Users,DC=chrisyjaime,DC=local"
+      when: user2_check.rc != 0
 
     - name: Asignar permisos de control total a Administrators
       ansible.windows.win_acl:
