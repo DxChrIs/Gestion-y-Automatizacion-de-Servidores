@@ -31,9 +31,12 @@
         Install-WindowsFeature AD-Domain-Services -IncludeManagementTools
         # Importar el módulo de despliegue de AD DS
         Import-Module ADDSDeployment
+        # Instalar el rol de File Server (opcional, si deseas compartir archivos desde el DC)
+        Install-WindowsFeature FS-FileServer
         # Promover el servidor a un controlador de dominio
         Install-ADDSForest `
-            -DomainName "chrisyjaime.local" `
+            -DomainName "chrisyjaime.com.mx" `
+            -DomainNetbiosName "GDL-DC-01"
             -SafeModeAdministratorPassword (ConvertTo-SecureString "ElAdministrador1853" -AsPlainText -Force) `
             -InstallDNS `
             -Force
