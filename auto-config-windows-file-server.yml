@@ -99,8 +99,9 @@
     - name: Agregar usuario1 al grupo "RestrictedAccess"
       microsoft.ad.group:
         name: "{{ restricted_group }}"
-        add:
-          - user1
+        members:
+          add:
+            - user1
 
     - name: Asignar permisos de lectura a "RestrictedAccess"
       ansible.windows.win_acl:
