@@ -159,7 +159,6 @@
         name: SeDenyInteractiveLogonRight
         users:
           - "User1"
-        state: present
 
     - name: Configurar auditoría de acceso a cuentas de usuario
       win_audit_policy_system:
