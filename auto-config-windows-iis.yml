@@ -2,6 +2,7 @@
 - name: Instalar y configurar IIS en Windows Server 2022 con HTTP, seguridad, logs y auditoría
   hosts: windows
   gather_facts: no
+  
   vars:
     site_name: "MiSitio"
     site_port: 80

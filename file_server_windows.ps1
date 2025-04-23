@@ -26,21 +26,19 @@
     if ($dcCheck) {
         Write-Output "Este servidor ya es un controlador de dominio."
     } else {
-        Write-Output "Este servidor NO es un controlador de dominio. Procediendo con la promoción..."
+        Write-Output "Este servidor NO es un controlador de dominio. Procediendo con la promocion..."
         # Instalar los roles necesarios para la promoción del controlador de dominio
         Install-WindowsFeature AD-Domain-Services -IncludeManagementTools
         # Importar el módulo de despliegue de AD DS
         Import-Module ADDSDeployment
-        # Instalar el rol de File Server (opcional, si deseas compartir archivos desde el DC)
-        Install-WindowsFeature FS-FileServer
         # Promover el servidor a un controlador de dominio
         Install-ADDSForest `
             -DomainName "chrisyjaime.com.mx" `
-            -DomainNetbiosName "GDL-DC-01"
+            -DomainNetbiosName "GDL-DC-01" `
             -SafeModeAdministratorPassword (ConvertTo-SecureString "ElAdministrador1853" -AsPlainText -Force) `
             -InstallDNS `
             -Force
-        Write-Output "La promoción a controlador de dominio se ha iniciado. El servidor se reiniciará."
+        Write-Output "La promocion a controlador de dominio se ha iniciado. El servidor se reiniciara."
     }
     Stop-Transcript
 </powershell>

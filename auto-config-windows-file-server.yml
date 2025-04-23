@@ -26,6 +26,12 @@
         group: "Users"
 
   tasks:
+    - name: Instalar File Server
+      ansible.windows.win_feature:
+        name: FS-FileServer
+        state: present
+        include_management_tools: yes
+
     - name: Crear carpeta compartida
       ansible.windows.win_file:
         path: "{{ shared_folder_path }}"
@@ -45,41 +51,30 @@
         scope: global
         state: present
 
-    - name: Verificar si el usuario user1 ya existe
+    - name: Verificar existencia de usuarios en Active Directory
       ansible.windows.win_shell: |
-        if (Get-ADUser -Filter {SamAccountName -eq '{{ users[0].name }}'}) { exit 0 } else { exit 1 }
-      register: user1_check
+        if (Get-ADUser -Filter {SamAccountName -eq '{{ item.name }}'}) { exit 0 } else { exit 1 }
+      register: user_check
+      loop: "{{ users }}"
+      loop_control:
+        label: "{{ item.name }}"
       ignore_errors: true
 
-    - name: Crear usuario user1 en Active Directory si no existe
+    - name: Crear usuarios en Active Directory si no existen
       ansible.windows.win_shell: |
-        $Password = ConvertTo-SecureString "{{ users[0].password }}" -AsPlainText -Force
-        New-ADUser -Name "{{ users[0].name }}" `
-                  -SamAccountName "{{ users[0].name }}" `
-                  -GivenName "{{ users[0].full_name.split(' ')[0] }}" `
-                  -Surname "{{ users[0].full_name.split(' ')[1] }}" `
+        $Password = ConvertTo-SecureString "{{ item.password }}" -AsPlainText -Force
+        New-ADUser -Name "{{ item.name }}" `
+                  -SamAccountName "{{ item.name }}" `
+                  -GivenName "{{ item.full_name.split(' ')[0] }}" `
+                  -Surname "{{ item.full_name.split(' ')[1] }}" `
                   -AccountPassword $Password `
                   -Enabled $true `
                   -Path "CN=Users,DC=chrisyjaime,DC=local"
-      when: user1_check.rc != 0
-
-    - name: Verificar si el usuario user2 ya existe
-      ansible.windows.win_shell: |
-        if (Get-ADUser -Filter {SamAccountName -eq '{{ users[1].name }}'}) { exit 0 } else { exit 1 }
-      register: user2_check
-      ignore_errors: true
-
-    - name: Crear usuario user2 en Active Directory si no existe
-      ansible.windows.win_shell: |
-        $Password = ConvertTo-SecureString "{{ users[1].password }}" -AsPlainText -Force
-        New-ADUser -Name "{{ users[1].name }}" `
-                  -SamAccountName "{{ users[1].name }}" `
-                  -GivenName "{{ users[1].full_name.split(' ')[0] }}" `
-                  -Surname "{{ users[1].full_name.split(' ')[1] }}" `
-                  -AccountPassword $Password `
-                  -Enabled $true `
-                  -Path "CN=Users,DC=chrisyjaime,DC=local"
-      when: user2_check.rc != 0
+      loop: "{{ users }}"
+      loop_control:
+        index_var: idx
+        label: "{{ item.name }}"
+      when: user_check.results[idx].rc != 0
 
     - name: Asignar permisos de control total a Administrators
       ansible.windows.win_acl:
