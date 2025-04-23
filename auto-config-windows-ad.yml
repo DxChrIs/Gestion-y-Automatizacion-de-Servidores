@@ -9,95 +9,79 @@
     - microsoft.ad
 
   vars:
-    domain_name: chrisyjaime.local
-    netbios_name: CJ_DC
-    safe_mode_password: 'ChrisAdmin1853'
-    admin_group: "Domain Admins"
-    ou_users: "OU=Users,DC=chrisyjaime,DC=local"
-    ou_groups: "OU=Groups,DC=chrisyjaime,DC=local"
-    ou_computers: "OU=Computers,DC=chrisyjaime,DC=local"
-    ou_it: "OU=IT,DC=chrisyjaime,DC=local"
-    password_policy_min_length: 12
-    password_policy_complexity: yes
-    password_policy_history: 24
+    domain_name: "chrisyjaime.com.mx"
+    password_policy_min_length: 8
+    password_policy_history: 5
+    password_policy_complexity: true
 
   tasks:
-    - name: Instalar el rol de Active Directory Domain Services (AD DS)
-      win_feature:
-        name: AD-Domain-Services
-        state: present
-        include_management_tools: yes
-
-    - name: Promocionar el servidor a controlador de dominio (si no lo es ya)
-      microsoft.ad.domain:
-        dns_domain_name: "{{ domain_name }}"
-        domain_netbios_name: "{{ netbios_name }}"
-        safe_mode_password: "{{ safe_mode_password }}"
-        create_dns_delegation: no
-        install_dns: yes
-        reboot: yes
-        sysvol_path: "C:\\Windows\\SYSVOL"
-        database_path: "C:\\Windows\\NTDS"
-        log_path: "C:\\Windows\\NTDS"
-        domain_mode: "Default"
-        forest_mode: "Default"
-
-    - name: Crear Organizational Unit (OU) para Usuarios
+    - name: Crear Organizational Unit (OU) para Empleados
       microsoft.ad.ou:
         name: "Empleados"
-        path: "DC=chrisyjaime,DC=local"
+        path: "DC=chrisyjaime,DC=com,DC=mx"
         state: present
 
-    - name: Crear Organizational Unit (OU) para Grupos
+    - name: Crear Organizational Unit (OU) para Soporte Tecnico
       microsoft.ad.ou:
-        name: ""
-        path: "DC=chrisyjaime,DC=local"
+        name: "Soporte Tecnico"
+        path: "DC=chrisyjaime,DC=com,DC=mx"
         state: present
 
-    - name: Crear Organizational Unit (OU) para Computadoras
+    - name: Crear Organizational Unit (OU) para Manager
       microsoft.ad.ou:
-        name: "Computers"
-        path: "DC=chrisyjaime,DC=local"
+        name: "Manager"
+        path: "DC=chrisyjaime,DC=com,DC=mx"
         state: present
 
     - name: Crear Organizational Unit (OU) para IT
       microsoft.ad.ou:
         name: "IT"
-        path: "DC=chrisyjaime,DC=local"
+        path: "DC=chrisyjaime,DC=com,DC=mx"
         state: present
 
     - name: Crear grupo de seguridad local "Administradores"
       microsoft.ad.group:
         name: "Administrators"
         state: present
+        scope: "domainlocal"
         members:
-          - "Administrator"
+          add:
+            - "administrator"
 
-    - name: Crear grupo global "Usuarios"
+    - name: Crear grupo global "Empleados"
       microsoft.ad.group:
-        name: "Users"
-        domain: "{{ domain_name }}"
-        group_scope: "Global"
+        name: "Empleados"
+        scope: "global"
         state: present
 
-    - name: Crear grupo universal "ITAdmins"
+    - name: Crear grupo global "ITAdmins"
       microsoft.ad.group:
         name: "ITAdmins"
-        domain: "{{ domain_name }}"
-        group_scope: "Universal"
+        scope: "global"
         state: present
         members:
-          - "Administrator"
-          - "User1" # Ejemplo de miembro
+          add:
+            - "administrator"
+            - "user1"
 
-    - name: Crear grupo "Domain Admins"
+    - name: Crear grupo universal "Administrators"
       microsoft.ad.group:
-        name: "{{ admin_group }}"
-        domain: "{{ domain_name }}"
-        group_scope: "Global"
+        name: "Administrators"
+        scope: "universal"
         state: present
         members:
-          - "Administrator"
+          add:
+            - "administrator"
+
+    - name: Crear grupo "DomainLocal" y asignar permisos a los grupos globales
+      microsoft.ad.group:
+        name: "LocalUsers"
+        scope: "domainlocal"
+        state: present
+        members:
+          add:
+            - "Empleados"
+            - "ITAdmins"  # Se agregan los grupos globales al grupo DomainLocal
 
     - name: Crear usuario "user1" en AD
       microsoft.ad.user:
@@ -110,8 +94,8 @@
         user_cannot_change_password: no
         password_never_expires: no
         groups:
-          - "Users"
-          - "{{ admin_group }}" # Ejemplo de asignación de grupo
+          add:
+            - "Empleados"
 
     - name: Crear usuario "user2" en AD
       microsoft.ad.user:
@@ -124,7 +108,8 @@
         user_cannot_change_password: no
         password_never_expires: no
         groups:
-          - "Users"
+          add:
+            - "Empleados"
 
     - name: Configurar política de longitud mínima de contraseña
       win_shell: net accounts /minpwlen:{{ password_policy_min_length }}
