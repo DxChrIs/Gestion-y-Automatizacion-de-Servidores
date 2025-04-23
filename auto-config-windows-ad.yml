@@ -54,9 +54,9 @@
           add:
             - "administrator"
 
-    - name: Crear grupo universal "Administrators"
+    - name: Crear grupo universal "Managers"
       microsoft.ad.group:
-        name: "Administrators"
+        name: "Managers"
         scope: "universal"
         state: present
         members:
@@ -71,7 +71,7 @@
         members:
           add:
             - "Empleados"
-            - "ITAdmins"  # Se agregan los grupos globales al grupo DomainLocal
+            - "ITAdmins"
 
     - name: Crear usuario "user1" en AD
       microsoft.ad.user:
@@ -100,6 +100,20 @@
         groups:
           add:
             - "ITAdmins"
+
+    - name: Crear usuario "user1" en AD
+      microsoft.ad.user:
+        name: "user3"
+        given_name: "User"
+        surname: "Three"
+        full_name: "User Three"
+        password: "P@ssW0rd1234"
+        state: present
+        user_cannot_change_password: no
+        password_never_expires: no
+        groups:
+          add:
+            - "Managers"
 
     - name: Configurar política de longitud mínima de contraseña
       win_shell: net accounts /minpwlen:{{ password_policy_min_length }}
