@@ -129,9 +129,9 @@
 
     - name: Habilitar complejidad de contraseñas
       win_regedit:
-        path: HKLM\SYSTEM\CurrentControlSet\Control\Lsa
+        path: HKLM:\SYSTEM\CurrentControlSet\Control\Lsa
         name: PasswordComplexity
-        data: "{{ 1 if password_policy_complexity else 0 }}"
+        data: 1
         type: dword
         state: present
 
