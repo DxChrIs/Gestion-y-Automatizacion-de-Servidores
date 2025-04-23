@@ -53,7 +53,6 @@
         members:
           add:
             - "administrator"
-            - "user1"
 
     - name: Crear grupo universal "Administrators"
       microsoft.ad.group:
@@ -100,7 +99,7 @@
         password_never_expires: no
         groups:
           add:
-            - "Empleados"
+            - "ITAdmins"
 
     - name: Configurar política de longitud mínima de contraseña
       win_shell: net accounts /minpwlen:{{ password_policy_min_length }}
