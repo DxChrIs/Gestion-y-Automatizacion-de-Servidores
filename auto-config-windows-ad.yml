@@ -146,13 +146,11 @@
 
     - name: Configurar Auditoría de inicio/cierre de sesión
       win_audit_policy_system:
-        category: Logon/Logoff
         subcategory: Logon
         audit_type: Success,Failure
 
     - name: Configurar Auditoría de acceso a objetos (Archivos)
       win_audit_policy_system:
-        category: Object Access
         subcategory: File System
         audit_type: Success,Failure
 
@@ -165,7 +163,6 @@
 
     - name: Configurar auditoría de acceso a cuentas de usuario
       win_audit_policy_system:
-        category: Account Logon
         subcategory: Special Logon
         audit_type: Success,Failure
 
