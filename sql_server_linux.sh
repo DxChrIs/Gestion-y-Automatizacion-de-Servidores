@@ -7,6 +7,8 @@ apt-get upgrade -y
 apt-get install software-properties-common -y
 add-apt-repository --yes --update ppa:ansible/ansible
 apt-get install -y ansible
+apt-get install -y mysql-server
+apt-get install -y mysql-client
 
 #Git
 apt-get install -y git

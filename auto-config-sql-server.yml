@@ -3,10 +3,19 @@
   hosts: all
   become: yes
 
+  collections:
+    - community.mysql
+
   tasks:
     - name: Instalar MySQL Server
       apt:
         name: mysql-server
+        state: present
+        update_cache: yes
+    
+    - name: Instalar MySQL Client
+      apt:
+        name: mysql-client
         state: present
         update_cache: yes
 
