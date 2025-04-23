@@ -39,15 +39,6 @@
         path: "DC=chrisyjaime,DC=com,DC=mx"
         state: present
 
-    - name: Crear grupo de seguridad local "Administradores"
-      microsoft.ad.group:
-        name: "Administrators"
-        state: present
-        scope: "domainlocal"
-        members:
-          add:
-            - "administrator"
-
     - name: Crear grupo global "Empleados"
       microsoft.ad.group:
         name: "Empleados"
