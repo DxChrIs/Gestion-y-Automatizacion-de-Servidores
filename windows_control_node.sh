@@ -125,7 +125,7 @@ ansible_winrm_scheme=http
 EOL
 } > inventory_file.ini
 
-sleep 60
+sleep 120
 
 # === Ejecutar playbook según el rol ===
 ansible-playbook -i inventory_iis.ini auto-config-windows-iis.yml
