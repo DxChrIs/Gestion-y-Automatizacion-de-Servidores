@@ -121,6 +121,57 @@
           add:
             - "Managers"
 
+    - name: Crear usuario para OU Empleados
+      microsoft.ad.user:
+        name: "Pedro Perez"
+        firstname: "Pedro"
+        surname: "Perez"
+        email: "pedro.perez@chrisyjaime.com.mx"
+        password: "PerezPAssWord123"
+        upn: "pedro.perez@chrisyjaime.com.mx"
+        state: present
+        enabled: true
+        path: "OU=Empleados,DC=chrisyjaime,DC=com,DC=mx"
+        user_cannot_change_password: no
+        password_never_expires: no
+        groups:
+          add:
+            - "Empleados"
+
+    - name: Crear usuario para OU IT
+      microsoft.ad.user:
+        name: "Juan Paramo"
+        firstname: "Juan"
+        surname: "Paramo"
+        email: "juan.paramo@chrisyjaime.com.mx"
+        password: "ParamoPAssWord123"
+        upn: "juan.paramo@chrisyjaime.com.mx"
+        state: present
+        enabled: true
+        path: "OU=IT,DC=chrisyjaime,DC=com,DC=mx"
+        user_cannot_change_password: no
+        password_never_expires: no
+        groups:
+          add:
+            - "ITAdmins"
+
+    - name: Crear usuario para OU Manager
+      microsoft.ad.user:
+        name: "Alberto Rojas"
+        firstname: "Alberto"
+        surname: "Rojas"
+        email: "alberto.rojas@chrisyjaime.com.mx"
+        password: "RojasPAssWord123"
+        upn: "alberto.rojas@chrisyjaime.com.mx" #UPN PARA LDAP
+        state: present
+        enabled: true
+        path: "OU=Manager,DC=chrisyjaime,DC=com,DC=mx"
+        user_cannot_change_password: no
+        password_never_expires: no
+        groups:
+          add:
+            - "Managers"
+
     - name: Configurar política de longitud mínima de contraseña
       win_shell: net accounts /minpwlen:{{ password_policy_min_length }}
 
