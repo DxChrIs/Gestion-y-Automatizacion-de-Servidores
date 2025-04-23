@@ -76,11 +76,13 @@
     - name: Crear usuario "user1" en AD
       microsoft.ad.user:
         name: "user1"
-        given_name: "User"
+        firstname: "User"
         surname: "One"
-        full_name: "User One"
+        email: "user1@chrisyjaime.com.mx"
         password: "P@ssw0rd123"
+        upn: "user1@chrisyjaime.com.mx"
         state: present
+        enabled: true
         user_cannot_change_password: no
         password_never_expires: no
         groups:
@@ -90,25 +92,29 @@
     - name: Crear usuario "user2" en AD
       microsoft.ad.user:
         name: "user2"
-        given_name: "User"
+        firstname: "User"
         surname: "Two"
-        full_name: "User Two"
+        email: "user2@chrisyjaime.com.mx"
         password: "SecurePassword456"
+        upn: "user2@chrisyjaime.com.mx"
         state: present
+        enabled: true
         user_cannot_change_password: no
         password_never_expires: no
         groups:
           add:
             - "ITAdmins"
 
-    - name: Crear usuario "user1" en AD
+    - name: Crear usuario "user3" en AD
       microsoft.ad.user:
         name: "user3"
-        given_name: "User"
+        firstname: "User"
         surname: "Three"
-        full_name: "User Three"
+        email: "user3@chrisyjaime.com.mx"
         password: "P@ssW0rd1234"
+        upn: "user3@chrisyjaime.com.mx"
         state: present
+        enabled: true
         user_cannot_change_password: no
         password_never_expires: no
         groups:
