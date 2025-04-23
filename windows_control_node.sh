@@ -130,6 +130,10 @@ sleep 120
 # === Ejecutar playbook según el rol ===
 ansible-playbook -i inventory_iis.ini auto-config-windows-iis.yml
 
+sleep 180
+
 ansible-playbook -i inventory_ad.ini auto-config-windows-ad.yml
+
+sleep 180
 
 ansible-playbook -i inventory_file.ini auto-config-windows-file-server.yml
