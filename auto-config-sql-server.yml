@@ -98,19 +98,12 @@
         rule: allow
         name: "OpenSSH"
         port: 22
-    
-    - name: Cambiar el puerto predeterminado de MySQL
-      lineinfile:
-        path: /etc/mysql/mysql.conf.d/mysqld.cnf
-        regexp: '^port'
-        line: 'port = 3399'
-      notify: Restart MySQL
 
     - name: Habilitar y permitir acceso al puerto 3306 (MySQL)
       ufw:
         state: enabled
         rule: allow
-        port: 3399
+        port: 3306
         proto: tcp
 
     - name: Realizar backup completo de MySQL
