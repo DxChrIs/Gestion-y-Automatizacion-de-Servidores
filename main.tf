@@ -144,6 +144,18 @@ resource "aws_network_acl_rule" "inbound_http" {
     to_port        = 80
 }
 
+# Entrada: permitir HTTPS (443)
+resource "aws_network_acl_rule" "inbound_https" {
+    network_acl_id = aws_network_acl.public_acl.id
+    rule_number    = 140
+    egress         = false
+    protocol       = "tcp"
+    rule_action    = "allow"
+    cidr_block     = "0.0.0.0/0"
+    from_port      = 443
+    to_port        = 443
+}
+
 # Entrada: permitir ICMP
 resource "aws_network_acl_rule" "inbound_icmp" {
     network_acl_id = aws_network_acl.public_acl.id
@@ -214,6 +226,18 @@ resource "aws_network_acl_rule" "outbound_http" {
     cidr_block     = "0.0.0.0/0"
     from_port      = 80
     to_port        = 80
+}
+
+# Salida: permitir HTTPS (443)
+resource "aws_network_acl_rule" "outbound_https" {
+    network_acl_id = aws_network_acl.public_acl.id
+    rule_number    = 140
+    egress         = true
+    protocol       = "tcp"
+    rule_action    = "allow"
+    cidr_block     = "0.0.0.0/0"
+    from_port      = 443
+    to_port        = 443
 }
 
 # Salida: permitir ICMP
