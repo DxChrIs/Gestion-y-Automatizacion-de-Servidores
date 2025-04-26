@@ -13,5 +13,5 @@ apt-get install -y git
 
 #habilitar firewall
 ufw allow 22
-ufw allow 8080
+ufw allow 80
 ufw --force enable

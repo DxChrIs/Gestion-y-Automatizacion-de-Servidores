@@ -17,5 +17,5 @@ pip3 install PyMySQL
 
 #habilitar firewall
 ufw allow 22
-ufw allow 3399
+ufw allow 3306
 ufw --force enable
