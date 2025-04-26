@@ -144,6 +144,18 @@ resource "aws_network_acl_rule" "inbound_http_ofuscated" {
     to_port        = 8080
 }
 
+# Entrada: permitir HTTPS (443)
+resource "aws_network_acl_rule" "inbound_https" {
+    network_acl_id = aws_network_acl.public_acl.id
+    rule_number    = 140
+    egress         = false
+    protocol       = "tcp"
+    rule_action    = "allow"
+    cidr_block     = "0.0.0.0/0"
+    from_port      = 443
+    to_port        = 443
+}
+
 # Entrada: permitir ICMP
 resource "aws_network_acl_rule" "inbound_icmp" {
     network_acl_id = aws_network_acl.public_acl.id
@@ -216,6 +228,18 @@ resource "aws_network_acl_rule" "outbound_http_ofuscate" {
     to_port        = 8080
 }
 
+# Salida: permitir HTTPS (443)
+resource "aws_network_acl_rule" "outbound_https" {
+    network_acl_id = aws_network_acl.public_acl.id
+    rule_number    = 140
+    egress         = true
+    protocol       = "tcp"
+    rule_action    = "allow"
+    cidr_block     = "0.0.0.0/0"
+    from_port      = 443
+    to_port        = 443
+}
+
 # Salida: permitir ICMP
 resource "aws_network_acl_rule" "outbound_icmp" {
     network_acl_id = aws_network_acl.public_acl.id
@@ -251,6 +275,14 @@ resource "aws_security_group" "linux_access" {
         description = "SSH access"
         from_port   = 22
         to_port     = 22
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "HTTPS access"
+        from_port   = 443
+        to_port     = 443
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
@@ -395,6 +427,14 @@ resource "aws_security_group" "windows_access" {
         cidr_blocks = ["0.0.0.0/0"]
     }
 
+    ingress {
+        description = "HTTPS access"
+        from_port   = 443
+        to_port     = 443
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+    
     ingress {
         description = "ICMP access"
         from_port   = -1
