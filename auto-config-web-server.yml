@@ -109,13 +109,47 @@
         rule: allow
         port: "{{ item }}"
       loop:
-        - "22"    # SSH
-        - "80"    # HTTP
+        - "2222"    # SSH
+        - "8080"    # HTTP
 
     - name: Habilitar UFW y establecer política predeterminada
       ufw:
         state: enabled
         policy: deny
+
+    # --------------------------
+    # 2. Configuración del Reverse Proxy en Apache
+    # --------------------------
+    - name: Habilitar módulos de proxy en Apache
+      apache2_module:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - proxy
+        - proxy_http
+
+    - name: Configurar VirtualHost en Apache para el Reverse Proxy
+      copy:
+        dest: /etc/apache2/sites-available/000-default.conf
+        content: |
+          <VirtualHost *:80>
+              ServerAdmin webmaster@localhost
+              ServerName {{ ansible_fqdn }}
+
+              # Configuración del Reverse Proxy
+              ProxyPreserveHost On
+              ProxyPass / http://localhost:8080/
+              ProxyPassReverse / http://localhost:8080/
+
+              ErrorLog ${APACHE_LOG_DIR}/error.log
+              CustomLog ${APACHE_LOG_DIR}/access.log combined
+          </VirtualHost>
+        mode: '0644'
+
+    - name: Reiniciar Apache para aplicar cambios
+      service:
+        name: apache2
+        state: restarted
 
     # --------------------------
     # 2. Login Banner con advertencia legal

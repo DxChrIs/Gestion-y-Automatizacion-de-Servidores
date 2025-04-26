@@ -97,15 +97,15 @@ resource "aws_network_acl" "public_acl" {
     }
 }
 # Entrada: permitir SSH (22)
-resource "aws_network_acl_rule" "inbound_ssh" {
+resource "aws_network_acl_rule" "inbound_ssh_ofuscate" {
     network_acl_id = aws_network_acl.public_acl.id
     rule_number    = 100
     egress         = false
     protocol       = "tcp"
     rule_action    = "allow"
     cidr_block     = "0.0.0.0/0"
-    from_port      = 22
-    to_port        = 22
+    from_port      = 2222
+    to_port        = 2222
 }
 
 # Entrada: permitir RDP (3389)
@@ -133,15 +133,15 @@ resource "aws_network_acl_rule" "inbound_ephemeral" {
 }
 
 # Entrada: permitir HTTP (80)
-resource "aws_network_acl_rule" "inbound_http" {
+resource "aws_network_acl_rule" "inbound_http_ofuscate" {
     network_acl_id = aws_network_acl.public_acl.id
     rule_number    = 130
     egress         = false
     protocol       = "tcp"
     rule_action    = "allow"
     cidr_block     = "0.0.0.0/0"
-    from_port      = 80
-    to_port        = 80
+    from_port      = 8080
+    to_port        = 8080
 }
 
 # Entrada: permitir HTTPS (443)
@@ -181,15 +181,15 @@ resource "aws_network_acl_rule" "inbound_sql" {
 }
 
 # Salida: permitir SSH
-resource "aws_network_acl_rule" "outbound_ssh" {
+resource "aws_network_acl_rule" "outbound_ssh_ofuscate" {
     network_acl_id = aws_network_acl.public_acl.id
     rule_number    = 100
     egress         = true
     protocol       = "tcp"
     rule_action    = "allow"
     cidr_block     = "0.0.0.0/0"
-    from_port      = 22
-    to_port        = 22
+    from_port      = 2222
+    to_port        = 2222
 }
 
 # Salida: permitir RDP
@@ -217,15 +217,15 @@ resource "aws_network_acl_rule" "outbound_ephemeral" {
 }
 
 # Salida: permitir HTTP (80)
-resource "aws_network_acl_rule" "outbound_http" {
+resource "aws_network_acl_rule" "outbound_http_ofuscate" {
     network_acl_id = aws_network_acl.public_acl.id
     rule_number    = 130
     egress         = true
     protocol       = "tcp"
     rule_action    = "allow"
     cidr_block     = "0.0.0.0/0"
-    from_port      = 80
-    to_port        = 80
+    from_port      = 8080
+    to_port        = 8080
 }
 
 # Salida: permitir HTTPS (443)
@@ -272,9 +272,9 @@ resource "aws_security_group" "linux_access" {
     name        = "linux-${var.region}-sg"
     description = "Allow SSH, ICMP, HTTPS, HTTP access"
     ingress {
-        description = "SSH access"
-        from_port   = 22
-        to_port     = 22
+        description = "SSH access Ofuscated"
+        from_port   = 2222
+        to_port     = 2222
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
@@ -288,9 +288,9 @@ resource "aws_security_group" "linux_access" {
     }
 
     ingress {
-        description = "HTTP access"
-        from_port   = 80
-        to_port     = 80
+        description = "HTTP access Ofuscated"
+        from_port   = 8080
+        to_port     = 8080
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
@@ -321,17 +321,17 @@ resource "aws_security_group" "web_linux_access" {
     name        = "web-linux-${var.region}-sg"
     description = "Allow SSH, HTTP and ICMP access"
     ingress {
-        description = "SSH access"
-        from_port   = 22
-        to_port     = 22
+        description = "SSH access Ofuscated"
+        from_port   = 2222
+        to_port     = 2222
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
 
     ingress {
-        description = "HTTP access"
-        from_port   = 80
-        to_port     = 80
+        description = "HTTP access Ofuscated"
+        from_port   = 8080
+        to_port     = 8080
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
@@ -362,9 +362,9 @@ resource "aws_security_group" "sql_linux_access" {
     name        = "sql-linux-${var.region}-sg"
     description = "Allow SSH, ICMP and SQL access"
     ingress {
-        description = "SSH access"
-        from_port   = 22
-        to_port     = 22
+        description = "SSH access Ofuscated"
+        from_port   = 2222
+        to_port     = 2222
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
@@ -420,9 +420,9 @@ resource "aws_security_group" "windows_access" {
     }
 
     ingress {
-        description = "SSH access for Ansible playbooks"
-        from_port   = 22
-        to_port     = 22
+        description = "SSH access for Ansible playbooks Ofuscated"
+        from_port   = 2222
+        to_port     = 2222
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
@@ -485,9 +485,9 @@ resource "aws_security_group" "iis_windows_access" {
     }
 
     ingress {
-        description = "SSH access for Ansible playbooks"
-        from_port   = 22
-        to_port     = 22
+        description = "SSH access for Ansible playbooks Ofuscated"
+        from_port   = 2222
+        to_port     = 2222
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
@@ -550,9 +550,9 @@ resource "aws_security_group" "ad_windows_access" {
     }
 
     ingress {
-        description = "SSH access for Ansible playbooks"
-        from_port   = 22
-        to_port     = 22
+        description = "SSH access for Ansible playbooks Ofuscated"
+        from_port   = 2222
+        to_port     = 2222
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
@@ -615,9 +615,9 @@ resource "aws_security_group" "file_windows_access" {
     }
 
     ingress {
-        description = "SSH access for Ansible playbooks"
-        from_port   = 22
-        to_port     = 22
+        description = "SSH access for Ansible playbooks Ofuscated"
+        from_port   = 2222
+        to_port     = 2222
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }

@@ -38,12 +38,12 @@ aws ec2 describe-instances --filters "Name=tag:Role,Values=sql" --query "Reserva
 # Combinar las IPs de web y sql en un solo archivo de inventario
 echo "[web]" > inventory_web.ini
 grep -v "$MY_IP" web_ips.txt | while read ip; do
-    echo "$ip ansible_user=ubuntu ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_private_key_file=/home/ubuntu/ssh-code.pem" >> inventory_web.ini
+    echo "$ip ansible_port=2222 ansible_user=ubuntu ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_private_key_file=/home/ubuntu/ssh-code.pem" >> inventory_web.ini
 done
 
 echo "[sql]" > inventory_sql.ini
 grep -v "$MY_IP" sql_ips.txt | while read ip; do
-    echo "$ip ansible_user=ubuntu ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_private_key_file=/home/ubuntu/ssh-code.pem ansible_python_interpreter=/usr/bin/python3" >> inventory_sql.ini
+    echo "$ip ansible_port=2222 ansible_user=ubuntu ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_private_key_file=/home/ubuntu/ssh-code.pem ansible_python_interpreter=/usr/bin/python3" >> inventory_sql.ini
 done
 
 # Esperar 120 segundos (esto podría depender de tu caso específico)
@@ -51,5 +51,7 @@ sleep 120
 
 # Ejecutar playbook correspondiente
 ansible-playbook -i inventory_web.ini auto-config-web-server.yml
+
+sleep 60
 
 ansible-playbook -i inventory_sql.ini auto-config-sql-server.yml
