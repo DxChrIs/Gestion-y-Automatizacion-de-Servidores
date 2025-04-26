@@ -159,7 +159,7 @@ resource "aws_network_acl_rule" "inbound_https" {
 # Entrada: permitir ICMP
 resource "aws_network_acl_rule" "inbound_icmp" {
     network_acl_id = aws_network_acl.public_acl.id
-    rule_number    = 140
+    rule_number    = 150
     egress         = false
     protocol       = "icmp"
     rule_action    = "allow"
@@ -171,7 +171,7 @@ resource "aws_network_acl_rule" "inbound_icmp" {
 # Entrada: permitir SQL
 resource "aws_network_acl_rule" "inbound_sql_ofuscated" {
     network_acl_id = aws_network_acl.public_acl.id
-    rule_number    = 150
+    rule_number    = 160
     egress         = false
     protocol       = "tcp"
     rule_action    = "allow"
@@ -243,7 +243,7 @@ resource "aws_network_acl_rule" "outbound_https" {
 # Salida: permitir ICMP
 resource "aws_network_acl_rule" "outbound_icmp" {
     network_acl_id = aws_network_acl.public_acl.id
-    rule_number    = 140
+    rule_number    = 150
     egress         = true
     protocol       = "icmp"
     rule_action    = "allow"
@@ -255,7 +255,7 @@ resource "aws_network_acl_rule" "outbound_icmp" {
 # Salida: permitir SQL
 resource "aws_network_acl_rule" "outbound_sql_ofuscated" {
     network_acl_id = aws_network_acl.public_acl.id
-    rule_number    = 150
+    rule_number    = 160
     egress         = true
     protocol       = "tcp"
     rule_action    = "allow"
@@ -434,7 +434,7 @@ resource "aws_security_group" "windows_access" {
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
-    
+
     ingress {
         description = "ICMP access"
         from_port   = -1
