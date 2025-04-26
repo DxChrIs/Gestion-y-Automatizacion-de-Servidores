@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# Configurar SSH para que use el puerto 2222
-sed -i 's/#Port 22/Port 2222/' /etc/ssh/sshd_config
-ufw allow 2222
-ufw --force enable
-systemctl restart ssh
-
 # Actualización e instalación de dependencias
 apt-get update -y
 apt-get upgrade -y
