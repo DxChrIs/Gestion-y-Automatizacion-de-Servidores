@@ -97,7 +97,7 @@
       ufw:
         rule: allow
         name: "OpenSSH"
-        port: 2222
+        port: 22
     
     - name: Cambiar el puerto predeterminado de MySQL
       lineinfile:

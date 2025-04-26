@@ -109,7 +109,7 @@
         rule: allow
         port: "{{ item }}"
       loop:
-        - "2222"    # SSH
+        - "22"    # SSH
         - "8080"    # HTTP
 
     - name: Habilitar UFW y establecer política predeterminada

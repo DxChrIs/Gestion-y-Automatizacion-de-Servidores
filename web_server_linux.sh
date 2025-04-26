@@ -11,8 +11,7 @@ apt-get install -y ansible
 #Git
 apt-get install -y git
 
-# Configurar SSH para que use el puerto 2222
-sed -i 's/#Port 22/Port 2222/' /etc/ssh/sshd_config
-ufw allow 2222
+#habilitar firewall
+ufw allow 22
+ufw allow 8080
 ufw --force enable
-systemctl restart ssh
