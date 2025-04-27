@@ -133,15 +133,15 @@ resource "aws_network_acl_rule" "inbound_ephemeral" {
 }
 
 # Entrada: permitir HTTP (80)
-resource "aws_network_acl_rule" "inbound_http" {
+resource "aws_network_acl_rule" "inbound_http_ofuscated" {
     network_acl_id = aws_network_acl.public_acl.id
     rule_number    = 130
     egress         = false
     protocol       = "tcp"
     rule_action    = "allow"
     cidr_block     = "0.0.0.0/0"
-    from_port      = 80
-    to_port        = 80
+    from_port      = 8080
+    to_port        = 8080
 }
 
 # Entrada: permitir HTTPS (443)
@@ -217,15 +217,15 @@ resource "aws_network_acl_rule" "outbound_ephemeral" {
 }
 
 # Salida: permitir HTTP (80)
-resource "aws_network_acl_rule" "outbound_http" {
+resource "aws_network_acl_rule" "outbound_http_ofuscated" {
     network_acl_id = aws_network_acl.public_acl.id
     rule_number    = 130
     egress         = true
     protocol       = "tcp"
     rule_action    = "allow"
     cidr_block     = "0.0.0.0/0"
-    from_port      = 80
-    to_port        = 80
+    from_port      = 8080
+    to_port        = 8080
 }
 
 # Salida: permitir HTTPS (443)
@@ -322,8 +322,8 @@ resource "aws_security_group" "web_linux_access" {
 
     ingress {
         description = "HTTP access Ofuscated"
-        from_port   = 80
-        to_port     = 80
+        from_port   = 8080
+        to_port     = 8080
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
