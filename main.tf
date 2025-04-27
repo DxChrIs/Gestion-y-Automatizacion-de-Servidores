@@ -1768,6 +1768,18 @@ resource "aws_iam_role_policy_attachment" "ssm_attach" {
     role       = aws_iam_role.ec2_ssm_role.name
     policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
+resource "aws_iam_role_policy_attachment" "ssm_attach" {
+    role       = aws_iam_role.ec2_ssm_role.name
+    policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentAdminPolicy"
+}
+resource "aws_iam_role_policy_attachment" "ssm_attach" {
+    role       = aws_iam_role.ec2_ssm_role.name
+    policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+resource "aws_iam_role_policy_attachment" "ssm_attach" {
+    role       = aws_iam_role.ec2_ssm_role.name
+    policy_arn = "arn:aws:iam::aws:policy/AmazonSSMFullAccess"
+}
 resource "aws_iam_instance_profile" "ec2_instance_profile" {
     name = "ec2-instance-profile"
     role = aws_iam_role.ec2_role.name
