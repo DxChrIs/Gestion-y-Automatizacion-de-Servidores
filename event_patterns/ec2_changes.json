@@ -1,16 +1,4 @@
 {
     "source": ["aws.ec2"],
-    "detail-type": [
-        "AWS API Call via CloudTrail"
-    ],
-    "detail": {
-        "eventSource": ["ec2.amazonaws.com"],
-        "eventName": [
-            "StartInstances",
-            "StopInstances",
-            "TerminateInstances",
-            "RebootInstances"
-        ],
-        "state": ["terminated", "running", "stopped"]
-    }
+    "detail-type": ["EC2 Instance State-change Notification"]
 }

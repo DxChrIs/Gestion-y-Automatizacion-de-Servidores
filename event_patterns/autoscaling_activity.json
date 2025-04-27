@@ -1,4 +1,20 @@
 {
     "source": ["aws.autoscaling"],
-    "detail-type": ["EC2 Instance Launch Successful", "EC2 Instance Terminate Successful"]
+    "detail-type": [
+        "EC2 Instance Launch Successful",
+        "EC2 Instance Terminate Successful",
+        "EC2 Instance Launch Unsuccessful",
+        "EC2 Instance Terminate Unsuccessful",
+        "EC2 Instance-launch Lifecycle Action",
+        "EC2 Instance-terminate Lifecycle Action"
+    ],
+    "detail": {
+        "AutoScalingGroupName": [
+            "web-linux-asg-autodeployment-srv-project",
+            "sql-linux-asg-autodeployment-srv-project",
+            "iis-windows-asg-autodeployment-srv-project",
+            "file-windows-asg-autodeployment-srv-project",
+            "ad-windows-asg-autodeployment-srv-project"
+        ]
+    }
 }

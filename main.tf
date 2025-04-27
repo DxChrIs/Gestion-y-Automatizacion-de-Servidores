@@ -1506,31 +1506,6 @@ resource "aws_cloudwatch_metric_alarm" "file_windows_scale_prevention" {
 }
 
 ###############################################
-#          CloudWatch VPC Alarms              #
-###############################################
-# Primero crea un Metric Filter sobre el Log Group
-# resource "aws_cloudwatch_log_metric_filter" "vpc_rejects" {
-#     name           = "VPCRejectCount"
-#     log_group_name = aws_cloudwatch_log_group.vpc_flow_logs.name
-#     pattern        = "\"REJECT\""
-#     metric_transformation {
-#         name      = "VPCRejects"
-#         namespace = "VPCFlowLogs"
-#         value     = "1"
-#     }
-# }
-# resource "aws_cloudwatch_metric_alarm" "vpc_rejects_alarm" {
-#     alarm_name          = "VPCRejects-High"
-#     namespace           = "VPCFlowLogs"
-#     metric_name         = aws_cloudwatch_log_metric_filter.vpc_rejects.metric_transformation[0].name
-#     statistic           = "Sum"
-#     period              = 300
-#     evaluation_periods  = 1
-#     threshold           = 10
-#     comparison_operator = "GreaterThanThreshold"
-# }
-
-###############################################
 #            CloudWatch EventBridge           #
 ###############################################
 resource "aws_cloudwatch_event_bus" "autodeployment_bus" {
@@ -1572,18 +1547,6 @@ resource "aws_cloudwatch_event_target" "rds_failures_target" {
     event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
     arn             = aws_cloudwatch_log_group.eventbridge_logs.arn
 }
-#---------Security Group Group Event-----------
-resource "aws_cloudwatch_event_rule" "security_group_changes" {
-    name            = "SecurityGroupChanges"
-    description     = "Show Security Group Changes"
-    event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
-    event_pattern   = file("${path.module}/event_patterns/security_group_changes.json")
-}
-resource "aws_cloudwatch_event_target" "security_group_changes_target" {
-    rule            = aws_cloudwatch_event_rule.security_group_changes.name
-    event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
-    arn             = aws_cloudwatch_log_group.eventbridge_logs.arn
-}
 #---------Elastic Load Balancer Group Event-----------
 resource "aws_cloudwatch_event_rule" "elb_healthstatus" {
     name            = "ELBHealthStatus"
@@ -1614,17 +1577,6 @@ resource "aws_cloudwatch_log_group" "eventbridge_logs" {
     name              = "/ec2/control-node-logs"
     retention_in_days = 1
 }
-
-###############################################
-#                VPC Flow Logs                #
-###############################################
-# resource "aws_flow_log" "vpc_all_traffic" {
-#     log_destination      = aws_cloudwatch_log_group.vpc_flow_logs.arn
-#     log_destination_type = "cloud-watch-logs"
-#     iam_role_arn         = aws_iam_role.flow_logs_role.arn
-#     vpc_id               = aws_vpc.main.id
-#     traffic_type         = "ALL"
-# }
 
 ###############################################
 #                 IAM Role                    #
