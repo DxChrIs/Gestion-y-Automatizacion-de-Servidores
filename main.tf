@@ -270,7 +270,7 @@ resource "aws_network_acl_rule" "outbound_sql" {
 resource "aws_security_group" "linux_access" {
     vpc_id      = aws_vpc.main.id
     name        = "linux-${var.region}-sg"
-    description = "Allow SSH, ICMP, HTTP access"
+    description = "Allow SSH, ICMP, HTTPS access"
     ingress {
         description = "SSH access"
         from_port   = 22
@@ -1200,13 +1200,356 @@ resource "aws_autoscaling_attachment" "sql_linux_attach" {
 }
 
 ###############################################
-#               CloudWatch Log                #
+#            CloudWatch Dashboard             #
+###############################################
+resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
+    dashboard_name = "autodeployment-server-dashboard"
+    
+    dashboard_body = jsonencode({
+        widgets = [
+            {
+                type    = "metric"
+                x       = 0
+                y       = 0
+                width   = 24
+                height  = 6
+
+                properties = {
+                    title   = "Linux-Control-Node Resource"
+                    region  = "var.region"
+                    stat    = "Average"
+                    period  = 120
+
+                    metrics = [
+                        [
+                            "AWS/EC2",
+                            "CPUUtilization",
+                            "InstanceId",
+                            aws_instance.linux_control_node.id
+                        ]
+                    ]
+                }
+            },
+            {
+                type    = "metric"
+                x       = 6
+                y       = 6
+                width   = 24
+                height  = 6
+
+                properties = {
+                    title   = "Windows-Control-Node Resource"
+                    region  = "var.region"
+                    stat    = "Average"
+                    period  = 300
+
+                    metrics = [
+                        [
+                            "AWS/EC2",
+                            "CPUUtilization",
+                            "InstanceId",
+                            aws_instance.windows_control_node.id
+                        ]
+                    ]
+                }
+            },
+            {
+                type    = "metric"
+                x       = 12
+                y       = 12
+                width   = 24
+                height  = 6
+
+                properties = {
+                    title   = "Web-Linux-Control-Node Resource"
+                    region  = "var.region"
+                    stat    = "Average"
+                    period  = 120
+
+                    metrics = [
+                        [
+                            "AWS/EC2",
+                            "CPUUtilization",
+                            "AutoScalingGroupName",
+                            aws_autoscaling_group.web_linux_asg.name
+                        ]
+                    ]
+                }
+            },
+            {
+                type    = "metric"
+                x       = 24
+                y       = 24
+                width   = 24
+                height  = 6
+
+                properties = {
+                    title   = "SQL-Linux-Control-Node Resource"
+                    region  = "var.region"
+                    stat    = "Average"
+                    period  = 120
+
+                    metrics = [
+                        [
+                            "AWS/EC2",
+                            "CPUUtilization",
+                            "AutoScalingGroupName",
+                            aws_autoscaling_group.sql_linux_asg.name
+                        ]
+                    ]
+                }
+            },
+            {
+                type    = "metric"
+                x       = 36
+                y       = 36
+                width   = 24
+                height  = 6
+
+                properties = {
+                    title   = "IIS-Windows-Control-Node Resource"
+                    region  = "var.region"
+                    stat    = "Average"
+                    period  = 120
+
+                    metrics = [
+                        [
+                            "AWS/EC2",
+                            "CPUUtilization",
+                            "AutoScalingGroupName",
+                            aws_autoscaling_group.iis_windows_asg.name
+                        ]
+                    ]
+                }
+            },
+            {
+                type    = "metric"
+                x       = 48
+                y       = 48
+                width   = 24
+                height  = 6
+
+                properties = {
+                    title   = "AD-Windows-Control-Node Resource"
+                    region  = "var.region"
+                    stat    = "Average"
+                    period  = 120
+
+                    metrics = [
+                        [
+                            "AWS/EC2",
+                            "CPUUtilization",
+                            "AutoScalingGroupName",
+                            aws_autoscaling_group.ad_windows_asg.name
+                        ]
+                    ]
+                }
+            },
+            {
+                type    = "metric"
+                x       = 60
+                y       = 60
+                width   = 24
+                height  = 6
+
+                properties = {
+                    title   = "File-Windows-Control-Node Resource"
+                    region  = "var.region"
+                    stat    = "Average"
+                    period  = 120
+
+                    metrics = [
+                        [
+                            "AWS/EC2",
+                            "CPUUtilization",
+                            "AutoScalingGroupName",
+                            aws_autoscaling_group.file_windows_asg.name
+                        ]
+                    ]
+                }
+            }
+        ]
+    })
+}
+
+###############################################
+#            CloudWatch Dashboard             #
+###############################################
+# resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
+#     dashboard_name = "autodeployment-server-dashboard"
+#     dashboard_body = jsonencode({
+#         widgets = concat(
+#         # 1) Widgets por cada instancia EC2 directa
+#         [for idx, inst_key in tolist(keys(local.ec2_instances)) : {
+#             type   = "metric"
+#             x      = 0
+#             y      = idx * 6
+#             width  = 24
+#             height = 6
+
+#             properties = {
+#                 title   = "${inst_key} Resources"
+#                 region  = "var.region"
+#                 view    = "timeSeries"
+#                 stacked = false
+#                 period  = 300
+#                 metrics = [
+#                     [ "AWS/EC2",     "CPUUtilization",   "InstanceId", local.ec2_instances[inst_key] ],
+#                 ]
+#             }
+#         }],
+
+#         # 2) Widgets por cada AutoScaling Group
+#         [for idx, asg_key in tolist(keys(local.asg_groups)) : {
+#             type   = "metric"
+#             x      = 0
+#             # desplazamos debajo de todas las instancias directas
+#             y      = (length(local.ec2_instances) * 6) + (idx * 6)
+#             width  = 24
+#             height = 6
+#             properties = {
+#                 title   = "${asg_key} ASG Resources"
+#                 region  = "var.region"
+#                 view    = "timeSeries"
+#                 stacked = false
+#                 period  = 300
+#                 metrics = [
+#                     [ "AWS/EC2",     "CPUUtilization",    "AutoScalingGroupName", local.asg_groups[asg_key] ],
+#                 ]
+#             }
+#         }],
+
+#         # 3) Widget de tráfico VPC
+#         [
+#             {
+#             type   = "metric"
+#             x      = 0
+#             y      = (length(local.ec2_instances) + length(local.asg_groups)) * 6
+#             width  = 24
+#             height = 6
+
+#             properties = {
+#                     title   = "VPC Traffic (All ENIs)"
+#                     region  = "var.region"
+#                     view    = "timeSeries"
+#                     stacked = false
+#                     period  = 300
+#                     metrics = [
+#                         [ "AWS/VPC", "NetworkPacketsIn",  "VpcId", aws_vpc.main.id ],
+#                         [ "AWS/VPC", "NetworkPacketsOut", "VpcId", aws_vpc.main.id ]
+#                     ]
+#             }
+#             },
+
+#             # 4) Widget de alarma VPC Rejects
+#             {
+#             type   = "alarm"
+#             x      = 0
+#             y      = ((length(local.ec2_instances) + length(local.asg_groups)) * 6) + 6
+#             width  = 12
+#             height = 6
+#                 properties = {
+#                     alarms = [ # Aquí se agrega la propiedad 'alarms'
+#                         aws_cloudwatch_metric_alarm.vpc_rejects_alarm.arn
+#                     ]
+#                     region    = "var.region"
+#                     title     = "VPC Rejects"
+#                 }
+#             }
+#         ]
+#         )
+#     })
+# }
+
+###############################################
+#          CloudWatch Alarm Instance          #
+###############################################
+# CPU Utilization >80%
+resource "aws_cloudwatch_metric_alarm" "linux_control_node_alarm" {
+    alarm_description = "Monitoring CPU Utilization"
+    alarm_name          = "Linux-Control-Node-"
+    namespace           = "AWS/EC2"
+    metric_name         = "CPUUtilization"
+    statistic           = "Average"
+    period              = 120
+    evaluation_periods  = 2
+    threshold           = 80
+    comparison_operator = "GreaterThanThreshold"
+
+    dimensions = {
+        InstanceId = aws_instance.linux_control_node.id
+    }
+}
+resource "aws_cloudwatch_metric_alarm" "windows_control_node_alarm" {
+    alarm_description = "Monitoring CPU Utilization"
+    alarm_name          = "Windows-Control-Node-"
+    namespace           = "AWS/EC2"
+    metric_name         = "CPUUtilization"
+    statistic           = "Average"
+    period              = 120
+    evaluation_periods  = 2
+    threshold           = 80
+    comparison_operator = "GreaterThanThreshold"
+
+    dimensions = {
+        InstanceId = aws_instance.windows_control_node.id
+    }
+}
+
+# # Memory Utilization >80% (via CWAgent namespace)
+# resource "aws_cloudwatch_metric_alarm" "ec2_ram" {
+#     for_each            = local.ec2_instances
+#     alarm_name          = "${each.key}-HighRAM"
+#     namespace           = "CWAgentRAM"
+#     metric_name         = "mem_used_percent"
+#     statistic           = "Average"
+#     period              = 300
+#     evaluation_periods  = 2
+#     threshold           = 80
+#     comparison_operator = "GreaterThanThreshold"
+#     dimensions = { InstanceId = each.value }
+# }
+
+# # Disk Usage >80% (via CWAgent)
+# resource "aws_cloudwatch_metric_alarm" "ec2_disk" {
+#     for_each            = local.ec2_instances
+#     alarm_name          = "${each.key}-HighDisk"
+#     namespace           = "CWAgentDISK"
+#     metric_name         = "disk_used_percent"
+#     statistic           = "Average"
+#     period              = 300
+#     evaluation_periods  = 2
+#     threshold           = 80
+#     comparison_operator = "GreaterThanThreshold"
+#     dimensions = {
+#         InstanceId = each.value
+#         mount_path = "/"
+#         filesystem = "/dev/sda1"
+#     }
+# }
+
+# # Status Check Failed
+# resource "aws_cloudwatch_metric_alarm" "ec2_status" {
+#     for_each            = local.ec2_instances
+#     alarm_name          = "${each.key}-StatusCheckFailed"
+#     namespace           = "AWS/EC2"
+#     metric_name         = "StatusCheckFailed"
+#     statistic           = "Maximum"
+#     period              = 300
+#     evaluation_periods  = 1
+#     threshold           = 1
+#     comparison_operator = "GreaterThanOrEqualToThreshold"
+#     dimensions = { InstanceId = each.value }
+# }
+
+###############################################
+#           CloudWatch Alarm ASG              #
 ###############################################
 #-------------Linux web server---------------
 resource "aws_cloudwatch_metric_alarm" "web_linux_scale_prevention" {
     alarm_description   = "Monitoring CPU utilization"
     alarm_actions       = [aws_autoscaling_policy.web_lin_scale_up.arn]
-    alarm_name          = "Linux-CPU-Scale-Up-${local.instance_name}"
+    alarm_name          = "Web-Linux-CPU-Scale-Up-${local.instance_name}"
     comparison_operator = "GreaterThanThreshold"
     namespace           = "AWS/EC2"
     evaluation_periods  = 2
@@ -1223,7 +1566,7 @@ resource "aws_cloudwatch_metric_alarm" "web_linux_scale_prevention" {
 resource "aws_cloudwatch_metric_alarm" "sql_linux_scale_prevention" {
     alarm_description   = "Monitoring CPU utilization"
     alarm_actions       = [aws_autoscaling_policy.sql_lin_scale_up.arn]
-    alarm_name          = "Linux-CPU-Scale-Up-${local.instance_name}"
+    alarm_name          = "SQL-Linux-CPU-Scale-Up-${local.instance_name}"
     comparison_operator = "GreaterThanThreshold"
     namespace           = "AWS/EC2"
     evaluation_periods  = 2
@@ -1287,6 +1630,78 @@ resource "aws_cloudwatch_metric_alarm" "file_windows_scale_prevention" {
         AutoScalingGroupName = aws_autoscaling_group.file_windows_asg.name
     }
 }
+
+###############################################
+#          CloudWatch VPC Alarms              #
+###############################################
+# Primero crea un Metric Filter sobre el Log Group
+# resource "aws_cloudwatch_log_metric_filter" "vpc_rejects" {
+#     name           = "VPCRejectCount"
+#     log_group_name = aws_cloudwatch_log_group.vpc_flow_logs.name
+#     pattern        = "\"REJECT\""
+#     metric_transformation {
+#         name      = "VPCRejects"
+#         namespace = "VPCFlowLogs"
+#         value     = "1"
+#     }
+# }
+# resource "aws_cloudwatch_metric_alarm" "vpc_rejects_alarm" {
+#     alarm_name          = "VPCRejects-High"
+#     namespace           = "VPCFlowLogs"
+#     metric_name         = aws_cloudwatch_log_metric_filter.vpc_rejects.metric_transformation[0].name
+#     statistic           = "Sum"
+#     period              = 300
+#     evaluation_periods  = 1
+#     threshold           = 10
+#     comparison_operator = "GreaterThanThreshold"
+# }
+
+###############################################
+#     CloudWatch EventBridge EC2 Changes      #
+###############################################
+# resource "aws_cloudwatch_event_rule" "ec2_state_change" {
+#     name        = "EC2StateChange"
+#     description = "Captura cambios de estado de instancias EC2"
+#     event_pattern = jsonencode({
+#         source      = ["aws.ec2"],
+#         detail-type = ["EC2 Instance State-change Notification"]
+#     })
+# }
+# resource "aws_cloudwatch_event_target" "ec2_state_change_target" {
+#     rule = aws_cloudwatch_event_rule.ec2_state_change.name
+#     arn  = aws_cloudwatch_log_group.ec2_app_logs.arn
+# }
+
+###############################################
+#           CloudWatch Log Groups             #
+###############################################
+# Logs de las aplicaciones (CloudWatch Agent)
+# resource "aws_cloudwatch_log_group" "ec2_app_logs" {
+#     name              = "/ec2/app-logs"
+#     retention_in_days = 1
+# }
+
+# # Logs de VPC Flow Logs
+# resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
+#     name              = "/vpc/flow-logs"
+#     lifecycle {
+#         ignore_changes = [
+#             name
+#         ]
+#     }
+# }
+
+###############################################
+#                VPC Flow Logs                #
+###############################################
+# resource "aws_flow_log" "vpc_all_traffic" {
+#     log_destination      = aws_cloudwatch_log_group.vpc_flow_logs.arn
+#     log_destination_type = "cloud-watch-logs"
+#     iam_role_arn         = aws_iam_role.flow_logs_role.arn
+#     vpc_id               = aws_vpc.main.id
+#     traffic_type         = "ALL"
+# }
+
 ###############################################
 #                 IAM Policy                  #
 ###############################################
@@ -1300,7 +1715,7 @@ resource "aws_iam_role" "ec2_role" {
             Action = "sts:AssumeRole"
             Effect = "Allow"
             Principal = {
-            Service = "ec2.amazonaws.com"
+                Service = "ec2.amazonaws.com"
             }
         }
         ]
@@ -1312,23 +1727,46 @@ resource "aws_iam_policy" "ec2_get_password_data" {
     policy = jsonencode({
         Version = "2012-10-17",
         Statement = [
-        {
-            Effect = "Allow",
-            Action = [
-            "ec2:GetPasswordData"
-            ],
-            Resource = "*"
-        }
+            {
+                Effect = "Allow",
+                Action = [
+                "ec2:GetPasswordData"
+                ],
+                Resource = "*"
+            }
         ]
+    })
+}
+resource "aws_iam_role" "ec2_ssm_role" {
+    name = "ec2-ssm-role"
+
+    assume_role_policy = jsonencode({
+        Version = "2012-10-17",
+        Statement = [{
+            Action = "sts:AssumeRole",
+            Principal = {
+                Service = "ec2.amazonaws.com"
+            },
+            Effect = "Allow",
+            Sid = ""
+        }]
     })
 }
 resource "aws_iam_role_policy_attachment" "ec2_readonly_policy" {
     role       = aws_iam_role.ec2_role.name
     policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
 }
+resource "aws_iam_role_policy_attachment" "cloudwatch_agent_attach" {
+    role        = aws_iam_role.ec2_role.name
+    policy_arn  = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
 resource "aws_iam_role_policy_attachment" "attach_get_password_data" {
     role       = aws_iam_role.ec2_role.name
     policy_arn = aws_iam_policy.ec2_get_password_data.arn
+}
+resource "aws_iam_role_policy_attachment" "ssm_attach" {
+    role       = aws_iam_role.ec2_ssm_role.name
+    policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 resource "aws_iam_instance_profile" "ec2_instance_profile" {
     name = "ec2-instance-profile"
