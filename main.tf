@@ -1540,21 +1540,21 @@ resource "aws_cloudwatch_event_rule" "ec2_state_change" {
     name        = "EC2StateChange"
     description = "Captura cambios de estado de instancias EC2"
     event_bus_name = aws_cloudwatch_event_bus.autodeployment_bus.name
-    event_pattern = file("/event_patterns/ec2_changes.json")
+    event_pattern = file("${path.module}/event_patterns/ec2_changes.json")
 }
 resource "aws_cloudwatch_event_target" "ec2_state_change_target" {
     rule = aws_cloudwatch_event_rule.ec2_state_change.name
     event_bus_name = aws_cloudwatch_event_bus.autodeployment_bus.name
-    arn  = aws_cloudwatch_log_group.ec2_app_logs.arn
+    arn  = aws_cloudwatch_log_group.eventbridge_logs.arn
 }
 
 ###############################################
 #           CloudWatch Log Groups             #
 ###############################################
 # Logs de las aplicaciones (CloudWatch Agent)
-resource "aws_cloudwatch_log_group" "ec2_app_logs" {
+resource "aws_cloudwatch_log_group" "eventbridge_logs" {
     name              = "/ec2/control-node-logs"
-    retention_in_days = -1
+    retention_in_days = 1
 }
 
 ###############################################
