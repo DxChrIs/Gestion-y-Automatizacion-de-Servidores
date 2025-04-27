@@ -1536,16 +1536,65 @@ resource "aws_cloudwatch_metric_alarm" "file_windows_scale_prevention" {
 resource "aws_cloudwatch_event_bus" "autodeployment_bus" {
     name = "autodeployment-server-bus"
 }
+#----------EC2 Instances Event-----------
 resource "aws_cloudwatch_event_rule" "ec2_state_change" {
-    name        = "EC2StateChange"
-    description = "Captura cambios de estado de instancias EC2"
-    event_bus_name = aws_cloudwatch_event_bus.autodeployment_bus.name
-    event_pattern = file("${path.module}/event_patterns/ec2_changes.json")
+    name            = "EC2StateChange"
+    description     = "Captura cambios de estado de instancias EC2"
+    event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
+    event_pattern   = file("${path.module}/event_patterns/ec2_changes.json")
 }
 resource "aws_cloudwatch_event_target" "ec2_state_change_target" {
-    rule = aws_cloudwatch_event_rule.ec2_state_change.name
-    event_bus_name = aws_cloudwatch_event_bus.autodeployment_bus.name
-    arn  = aws_cloudwatch_log_group.eventbridge_logs.arn
+    rule            = aws_cloudwatch_event_rule.ec2_state_change.name
+    event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
+    arn             = aws_cloudwatch_log_group.eventbridge_logs.arn
+}
+#---------Autoscaling Group Event-----------
+resource "aws_cloudwatch_event_rule" "autoscaling_activity" {
+    name            = "AutoScalingGroup Activity"
+    description     = "Autoscaling Group Event"
+    event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
+    event_pattern   = file("${path.module}/event_patterns/autoscaling_activity.json")
+}
+resource "aws_cloudwatch_event_target" "autoscaling_activity_target" {
+rule                = aws_cloudwatch_event_rule.autoscaling_activity.name
+    event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
+    arn             = aws_cloudwatch_log_group.eventbridge_logs.arn
+}
+#---------RDS Group Event-----------
+resource "aws_cloudwatch_event_rule" "rds_failures" {
+    name            = "RDS Failures"
+    description     = "RDS Show Failures"
+    event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
+    event_pattern   = file("${path.module}/event_patterns/rds_failures.json")
+}
+resource "aws_cloudwatch_event_target" "rds_failures_target" {
+    rule            = aws_cloudwatch_event_rule.rds_failures.name
+    event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
+    arn             = aws_cloudwatch_log_group.eventbridge_logs.arn
+}
+#---------Security Group Group Event-----------
+resource "aws_cloudwatch_event_rule" "security_group_changes" {
+    name            = "Security Group Changes"
+    description     = "Show Security Group Changes"
+    event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
+    event_pattern   = file("${path.module}/event_patterns/security_group_changes.json")
+}
+resource "aws_cloudwatch_event_target" "security_group_changes_target" {
+    rule            = aws_cloudwatch_event_rule.security_group_changes.name
+    event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
+    arn             = aws_cloudwatch_log_group.eventbridge_logs.arn
+}
+#---------Elastic Load Balancer Group Event-----------
+resource "aws_cloudwatch_event_rule" "elb_healthstatus" {
+    name            = "ELB Health Status"
+    description     = "Show ELB Health Status"
+    event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
+    event_pattern   = file("${path.module}/event_patterns/elb_healthstatus.json")
+}
+resource "aws_cloudwatch_event_target" "elb_healthstatus_target" {
+    rule            = aws_cloudwatch_event_rule.elb_healthstatus.name
+    event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
+    arn             = aws_cloudwatch_log_group.eventbridge_logs.arn
 }
 
 ###############################################
