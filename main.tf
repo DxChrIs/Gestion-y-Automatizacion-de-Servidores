@@ -393,7 +393,7 @@ resource "aws_security_group" "sql_linux_access" {
 resource "aws_security_group" "windows_access" {
     vpc_id      = aws_vpc.main.id
     name        = "windows-${var.region}-sg"
-    description = "Allow winRM, RDP, SSH, HTTP access"
+    description = "Allow winRM, RDP, SSH, HTTPS, HTTP access"
 
     ingress {
         description = "WinRM access"
@@ -458,7 +458,7 @@ resource "aws_security_group" "windows_access" {
 resource "aws_security_group" "iis_windows_access" {
     vpc_id      = aws_vpc.main.id
     name        = "iis_windows-${var.region}-sg"
-    description = "Allow winRM, RDP, SSH, HTTP access"
+    description = "Allow winRM, RDP, HTTP access"
 
     ingress {
         description = "WinRM access"
@@ -472,14 +472,6 @@ resource "aws_security_group" "iis_windows_access" {
         description = "RDP access"
         from_port   = 3389
         to_port     = 3389
-        protocol    = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-
-    ingress {
-        description = "SSH access for Ansible playbooks"
-        from_port   = 22
-        to_port     = 22
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
@@ -515,7 +507,7 @@ resource "aws_security_group" "iis_windows_access" {
 resource "aws_security_group" "ad_windows_access" {
     vpc_id      = aws_vpc.main.id
     name        = "ad-windows-${var.region}-sg"
-    description = "Allow winRM, RDP, SSH, HTTP access"
+    description = "Allow winRM, RDP access"
 
     ingress {
         description = "WinRM access"
@@ -529,22 +521,6 @@ resource "aws_security_group" "ad_windows_access" {
         description = "RDP access"
         from_port   = 3389
         to_port     = 3389
-        protocol    = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-
-    ingress {
-        description = "SSH access for Ansible playbooks"
-        from_port   = 22
-        to_port     = 22
-        protocol    = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-
-    ingress {
-        description = "HTTP access"
-        from_port   = 80
-        to_port     = 80
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
@@ -572,7 +548,7 @@ resource "aws_security_group" "ad_windows_access" {
 resource "aws_security_group" "file_windows_access" {
     vpc_id      = aws_vpc.main.id
     name        = "file-windows-${var.region}-sg"
-    description = "Allow winRM, RDP, SSH, HTTP access"
+    description = "Allow winRM, RDP access"
 
     ingress {
         description = "WinRM access"
@@ -586,22 +562,6 @@ resource "aws_security_group" "file_windows_access" {
         description = "RDP access"
         from_port   = 3389
         to_port     = 3389
-        protocol    = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-
-    ingress {
-        description = "SSH access for Ansible playbooks"
-        from_port   = 22
-        to_port     = 22
-        protocol    = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-
-    ingress {
-        description = "HTTP access"
-        from_port   = 80
-        to_port     = 80
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
