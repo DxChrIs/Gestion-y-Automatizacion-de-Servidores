@@ -12,14 +12,10 @@ apt-get install -y jq
 
 # Asegúrate de tener AWS CLI instalado y configurado
 sudo snap install aws-cli --classic
-sudo snap install amazon-ssm-agent --classic
 
 # Configuración de AWS CLI
 aws configure set region us-east-1
 aws configure set output json
-
-sudo systemctl enable amazon-ssm-agent
-sudo systemctl start amazon-ssm-agent
 
 # Obtener el ID de la instancia
 INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)

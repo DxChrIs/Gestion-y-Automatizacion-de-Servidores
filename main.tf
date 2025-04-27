@@ -648,6 +648,8 @@ resource "aws_instance" "linux_control_node" {
     
     user_data = base64encode(file("linux_control_node.sh"))
 
+    monitoring = true
+
     provisioner "file" {
         source = "./ssh-code.pem"
         destination = "/home/ubuntu/ssh-code.pem"
@@ -766,6 +768,8 @@ resource "aws_instance" "windows_control_node" {
     iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
     
     user_data = base64encode(file("windows_control_node.sh"))
+
+    monitoring = true
 
     provisioner "file" {
         source = "./ssh-code.pem"
@@ -1203,8 +1207,11 @@ resource "aws_autoscaling_attachment" "sql_linux_attach" {
 #            CloudWatch Dashboard             #
 ###############################################
 resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
+    depends_on = [ aws_instance.linux_control_node, aws_instance.windows_control_node,
+                    aws_autoscaling_group.web_linux_asg, aws_autoscaling_group.sql_linux_asg, aws_autoscaling_group.iis_windows_asg, aws_autoscaling_group.file_windows_asg,
+                    aws_autoscaling_group.ad_windows_asg ]
+
     dashboard_name = "autodeployment-server-dashboard"
-    
     dashboard_body = jsonencode({
         widgets = [
             {
@@ -1216,7 +1223,7 @@ resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
 
                 properties = {
                     title   = "Linux-Control-Node Resource"
-                    region  = "var.region"
+                    region  = var.region
                     stat    = "Average"
                     period  = 120
 
@@ -1225,21 +1232,21 @@ resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
                             "AWS/EC2",
                             "CPUUtilization",
                             "InstanceId",
-                            aws_instance.linux_control_node.id
+                            "${aws_instance.linux_control_node.id}"
                         ]
                     ]
                 }
             },
             {
                 type    = "metric"
-                x       = 6
+                x       = 0
                 y       = 6
                 width   = 24
                 height  = 6
 
                 properties = {
                     title   = "Windows-Control-Node Resource"
-                    region  = "var.region"
+                    region  = var.region
                     stat    = "Average"
                     period  = 300
 
@@ -1248,21 +1255,21 @@ resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
                             "AWS/EC2",
                             "CPUUtilization",
                             "InstanceId",
-                            aws_instance.windows_control_node.id
+                            "${aws_instance.windows_control_node.id}"
                         ]
                     ]
                 }
             },
             {
                 type    = "metric"
-                x       = 12
+                x       = 0
                 y       = 12
                 width   = 24
                 height  = 6
 
                 properties = {
                     title   = "Web-Linux-Control-Node Resource"
-                    region  = "var.region"
+                    region  = var.region
                     stat    = "Average"
                     period  = 120
 
@@ -1271,21 +1278,21 @@ resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
                             "AWS/EC2",
                             "CPUUtilization",
                             "AutoScalingGroupName",
-                            aws_autoscaling_group.web_linux_asg.name
+                            "${aws_autoscaling_group.web_linux_asg.name}"
                         ]
                     ]
                 }
             },
             {
                 type    = "metric"
-                x       = 24
-                y       = 24
+                x       = 0
+                y       = 18
                 width   = 24
                 height  = 6
 
                 properties = {
                     title   = "SQL-Linux-Control-Node Resource"
-                    region  = "var.region"
+                    region  = var.region
                     stat    = "Average"
                     period  = 120
 
@@ -1294,21 +1301,21 @@ resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
                             "AWS/EC2",
                             "CPUUtilization",
                             "AutoScalingGroupName",
-                            aws_autoscaling_group.sql_linux_asg.name
+                            "${aws_autoscaling_group.sql_linux_asg.name}"
                         ]
                     ]
                 }
             },
             {
                 type    = "metric"
-                x       = 36
-                y       = 36
+                x       = 0
+                y       = 24
                 width   = 24
                 height  = 6
 
                 properties = {
                     title   = "IIS-Windows-Control-Node Resource"
-                    region  = "var.region"
+                    region  = var.region
                     stat    = "Average"
                     period  = 120
 
@@ -1317,21 +1324,21 @@ resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
                             "AWS/EC2",
                             "CPUUtilization",
                             "AutoScalingGroupName",
-                            aws_autoscaling_group.iis_windows_asg.name
+                            "${aws_autoscaling_group.iis_windows_asg.name}"
                         ]
                     ]
                 }
             },
             {
                 type    = "metric"
-                x       = 48
-                y       = 48
+                x       = 0
+                y       = 30
                 width   = 24
                 height  = 6
 
                 properties = {
                     title   = "AD-Windows-Control-Node Resource"
-                    region  = "var.region"
+                    region  = var.region
                     stat    = "Average"
                     period  = 120
 
@@ -1340,21 +1347,21 @@ resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
                             "AWS/EC2",
                             "CPUUtilization",
                             "AutoScalingGroupName",
-                            aws_autoscaling_group.ad_windows_asg.name
+                            "${aws_autoscaling_group.ad_windows_asg.name}"
                         ]
                     ]
                 }
             },
             {
                 type    = "metric"
-                x       = 60
-                y       = 60
+                x       = 0
+                y       = 36
                 width   = 24
                 height  = 6
 
                 properties = {
                     title   = "File-Windows-Control-Node Resource"
-                    region  = "var.region"
+                    region  = var.region
                     stat    = "Average"
                     period  = 120
 
@@ -1363,7 +1370,7 @@ resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
                             "AWS/EC2",
                             "CPUUtilization",
                             "AutoScalingGroupName",
-                            aws_autoscaling_group.file_windows_asg.name
+                            "${aws_autoscaling_group.file_windows_asg.name}"
                         ]
                     ]
                 }
@@ -1737,21 +1744,6 @@ resource "aws_iam_policy" "ec2_get_password_data" {
         ]
     })
 }
-resource "aws_iam_role" "ec2_ssm_role" {
-    name = "ec2-ssm-role"
-
-    assume_role_policy = jsonencode({
-        Version = "2012-10-17",
-        Statement = [{
-            Action = "sts:AssumeRole",
-            Principal = {
-                Service = "ec2.amazonaws.com"
-            },
-            Effect = "Allow",
-            Sid = ""
-        }]
-    })
-}
 resource "aws_iam_role_policy_attachment" "ec2_readonly_policy" {
     role       = aws_iam_role.ec2_role.name
     policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
@@ -1763,22 +1755,6 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_agent_attach" {
 resource "aws_iam_role_policy_attachment" "attach_get_password_data" {
     role       = aws_iam_role.ec2_role.name
     policy_arn = aws_iam_policy.ec2_get_password_data.arn
-}
-resource "aws_iam_role_policy_attachment" "ssm_attach" {
-    role       = aws_iam_role.ec2_ssm_role.name
-    policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-}
-resource "aws_iam_role_policy_attachment" "ssm_attach" {
-    role       = aws_iam_role.ec2_ssm_role.name
-    policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentAdminPolicy"
-}
-resource "aws_iam_role_policy_attachment" "ssm_attach" {
-    role       = aws_iam_role.ec2_ssm_role.name
-    policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
-}
-resource "aws_iam_role_policy_attachment" "ssm_attach" {
-    role       = aws_iam_role.ec2_ssm_role.name
-    policy_arn = "arn:aws:iam::aws:policy/AmazonSSMFullAccess"
 }
 resource "aws_iam_instance_profile" "ec2_instance_profile" {
     name = "ec2-instance-profile"

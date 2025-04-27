@@ -11,11 +11,6 @@ apt-get install -y ansible
 #Git
 apt-get install -y git
 
-sudo snap install amazon-ssm-agent --classic
-
-sudo systemctl enable amazon-ssm-agent
-sudo systemctl start amazon-ssm-agent
-
 #habilitar firewall
 ufw allow 22
 ufw allow 80
