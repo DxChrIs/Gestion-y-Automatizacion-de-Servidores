@@ -1380,101 +1380,12 @@ resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
 }
 
 ###############################################
-#            CloudWatch Dashboard             #
-###############################################
-# resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
-#     dashboard_name = "autodeployment-server-dashboard"
-#     dashboard_body = jsonencode({
-#         widgets = concat(
-#         # 1) Widgets por cada instancia EC2 directa
-#         [for idx, inst_key in tolist(keys(local.ec2_instances)) : {
-#             type   = "metric"
-#             x      = 0
-#             y      = idx * 6
-#             width  = 24
-#             height = 6
-
-#             properties = {
-#                 title   = "${inst_key} Resources"
-#                 region  = "var.region"
-#                 view    = "timeSeries"
-#                 stacked = false
-#                 period  = 300
-#                 metrics = [
-#                     [ "AWS/EC2",     "CPUUtilization",   "InstanceId", local.ec2_instances[inst_key] ],
-#                 ]
-#             }
-#         }],
-
-#         # 2) Widgets por cada AutoScaling Group
-#         [for idx, asg_key in tolist(keys(local.asg_groups)) : {
-#             type   = "metric"
-#             x      = 0
-#             # desplazamos debajo de todas las instancias directas
-#             y      = (length(local.ec2_instances) * 6) + (idx * 6)
-#             width  = 24
-#             height = 6
-#             properties = {
-#                 title   = "${asg_key} ASG Resources"
-#                 region  = "var.region"
-#                 view    = "timeSeries"
-#                 stacked = false
-#                 period  = 300
-#                 metrics = [
-#                     [ "AWS/EC2",     "CPUUtilization",    "AutoScalingGroupName", local.asg_groups[asg_key] ],
-#                 ]
-#             }
-#         }],
-
-#         # 3) Widget de tráfico VPC
-#         [
-#             {
-#             type   = "metric"
-#             x      = 0
-#             y      = (length(local.ec2_instances) + length(local.asg_groups)) * 6
-#             width  = 24
-#             height = 6
-
-#             properties = {
-#                     title   = "VPC Traffic (All ENIs)"
-#                     region  = "var.region"
-#                     view    = "timeSeries"
-#                     stacked = false
-#                     period  = 300
-#                     metrics = [
-#                         [ "AWS/VPC", "NetworkPacketsIn",  "VpcId", aws_vpc.main.id ],
-#                         [ "AWS/VPC", "NetworkPacketsOut", "VpcId", aws_vpc.main.id ]
-#                     ]
-#             }
-#             },
-
-#             # 4) Widget de alarma VPC Rejects
-#             {
-#             type   = "alarm"
-#             x      = 0
-#             y      = ((length(local.ec2_instances) + length(local.asg_groups)) * 6) + 6
-#             width  = 12
-#             height = 6
-#                 properties = {
-#                     alarms = [ # Aquí se agrega la propiedad 'alarms'
-#                         aws_cloudwatch_metric_alarm.vpc_rejects_alarm.arn
-#                     ]
-#                     region    = "var.region"
-#                     title     = "VPC Rejects"
-#                 }
-#             }
-#         ]
-#         )
-#     })
-# }
-
-###############################################
 #          CloudWatch Alarm Instance          #
 ###############################################
 # CPU Utilization >80%
 resource "aws_cloudwatch_metric_alarm" "linux_control_node_alarm" {
     alarm_description = "Monitoring CPU Utilization"
-    alarm_name          = "Linux-Control-Node-"
+    alarm_name          = "Linux-Control-Node"
     namespace           = "AWS/EC2"
     metric_name         = "CPUUtilization"
     statistic           = "Average"
@@ -1489,7 +1400,7 @@ resource "aws_cloudwatch_metric_alarm" "linux_control_node_alarm" {
 }
 resource "aws_cloudwatch_metric_alarm" "windows_control_node_alarm" {
     alarm_description = "Monitoring CPU Utilization"
-    alarm_name          = "Windows-Control-Node-"
+    alarm_name          = "Windows-Control-Node"
     namespace           = "AWS/EC2"
     metric_name         = "CPUUtilization"
     statistic           = "Average"
@@ -1502,52 +1413,6 @@ resource "aws_cloudwatch_metric_alarm" "windows_control_node_alarm" {
         InstanceId = aws_instance.windows_control_node.id
     }
 }
-
-# # Memory Utilization >80% (via CWAgent namespace)
-# resource "aws_cloudwatch_metric_alarm" "ec2_ram" {
-#     for_each            = local.ec2_instances
-#     alarm_name          = "${each.key}-HighRAM"
-#     namespace           = "CWAgentRAM"
-#     metric_name         = "mem_used_percent"
-#     statistic           = "Average"
-#     period              = 300
-#     evaluation_periods  = 2
-#     threshold           = 80
-#     comparison_operator = "GreaterThanThreshold"
-#     dimensions = { InstanceId = each.value }
-# }
-
-# # Disk Usage >80% (via CWAgent)
-# resource "aws_cloudwatch_metric_alarm" "ec2_disk" {
-#     for_each            = local.ec2_instances
-#     alarm_name          = "${each.key}-HighDisk"
-#     namespace           = "CWAgentDISK"
-#     metric_name         = "disk_used_percent"
-#     statistic           = "Average"
-#     period              = 300
-#     evaluation_periods  = 2
-#     threshold           = 80
-#     comparison_operator = "GreaterThanThreshold"
-#     dimensions = {
-#         InstanceId = each.value
-#         mount_path = "/"
-#         filesystem = "/dev/sda1"
-#     }
-# }
-
-# # Status Check Failed
-# resource "aws_cloudwatch_metric_alarm" "ec2_status" {
-#     for_each            = local.ec2_instances
-#     alarm_name          = "${each.key}-StatusCheckFailed"
-#     namespace           = "AWS/EC2"
-#     metric_name         = "StatusCheckFailed"
-#     statistic           = "Maximum"
-#     period              = 300
-#     evaluation_periods  = 1
-#     threshold           = 1
-#     comparison_operator = "GreaterThanOrEqualToThreshold"
-#     dimensions = { InstanceId = each.value }
-# }
 
 ###############################################
 #           CloudWatch Alarm ASG              #
