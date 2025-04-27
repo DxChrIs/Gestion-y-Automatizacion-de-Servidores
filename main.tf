@@ -1550,7 +1550,7 @@ resource "aws_cloudwatch_event_target" "ec2_state_change_target" {
 }
 #---------Autoscaling Group Event-----------
 resource "aws_cloudwatch_event_rule" "autoscaling_activity" {
-    name            = "AutoScalingGroup Activity"
+    name            = "AutoScalingGroupActivity"
     description     = "Autoscaling Group Event"
     event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
     event_pattern   = file("${path.module}/event_patterns/autoscaling_activity.json")
@@ -1562,7 +1562,7 @@ rule                = aws_cloudwatch_event_rule.autoscaling_activity.name
 }
 #---------RDS Group Event-----------
 resource "aws_cloudwatch_event_rule" "rds_failures" {
-    name            = "RDS Failures"
+    name            = "RDSFailures"
     description     = "RDS Show Failures"
     event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
     event_pattern   = file("${path.module}/event_patterns/rds_failures.json")
@@ -1574,7 +1574,7 @@ resource "aws_cloudwatch_event_target" "rds_failures_target" {
 }
 #---------Security Group Group Event-----------
 resource "aws_cloudwatch_event_rule" "security_group_changes" {
-    name            = "Security Group Changes"
+    name            = "SecurityGroupChanges"
     description     = "Show Security Group Changes"
     event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
     event_pattern   = file("${path.module}/event_patterns/security_group_changes.json")
@@ -1586,7 +1586,7 @@ resource "aws_cloudwatch_event_target" "security_group_changes_target" {
 }
 #---------Elastic Load Balancer Group Event-----------
 resource "aws_cloudwatch_event_rule" "elb_healthstatus" {
-    name            = "ELB Health Status"
+    name            = "ELBHealthStatus"
     description     = "Show ELB Health Status"
     event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
     event_pattern   = file("${path.module}/event_patterns/elb_healthstatus.json")
