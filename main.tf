@@ -1556,7 +1556,7 @@ resource "aws_cloudwatch_event_rule" "autoscaling_activity" {
     event_pattern   = file("${path.module}/event_patterns/autoscaling_activity.json")
 }
 resource "aws_cloudwatch_event_target" "autoscaling_activity_target" {
-rule                = aws_cloudwatch_event_rule.autoscaling_activity.name
+    rule            = aws_cloudwatch_event_rule.autoscaling_activity.name
     event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
     arn             = aws_cloudwatch_log_group.eventbridge_logs.arn
 }
@@ -1595,6 +1595,15 @@ resource "aws_cloudwatch_event_target" "elb_healthstatus_target" {
     rule            = aws_cloudwatch_event_rule.elb_healthstatus.name
     event_bus_name  = aws_cloudwatch_event_bus.autodeployment_bus.name
     arn             = aws_cloudwatch_log_group.eventbridge_logs.arn
+}
+
+###############################################
+#      CloudWatch EventBridge Archives        #
+###############################################
+resource "aws_cloudwatch_event_archive" "autodeployment_archive" {
+    name                = "Autodeployment-Archive_logs"
+    event_source_arn    = aws_cloudwatch_event_bus.autodeployment_bus.arn
+    retention_days      = 1
 }
 
 ###############################################
@@ -1658,6 +1667,7 @@ resource "aws_iam_policy" "ec2_get_password_data" {
 }
 resource "aws_iam_role_policy" "eventbridge_to_logs_policy" {
     role = aws_iam_role.ec2_role.id
+    name = "EventBridgeLogsPolicy"
 
     policy = jsonencode({
         Version = "2012-10-17"

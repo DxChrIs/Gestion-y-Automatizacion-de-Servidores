@@ -1,7 +1,7 @@
 {
     "source": ["aws.ec2"],
     "detail-type": [
-        "AWS API Call"
+        "AWS API Call via CloudTrail"
     ],
     "detail": {
         "eventSource": ["ec2.amazonaws.com"],
@@ -10,6 +10,7 @@
             "StopInstances",
             "TerminateInstances",
             "RebootInstances"
-        ]
+        ],
+        "state": ["terminated", "running", "stopped"]
     }
 }

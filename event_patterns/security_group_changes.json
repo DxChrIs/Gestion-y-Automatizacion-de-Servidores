@@ -1,7 +1,7 @@
 {
     "source": ["aws.ec2"],
     "detail-type": [
-        "AWS API Call"
+        "AWS API Call via CloudTrail"
     ],
     "detail": {
         "eventName": [
