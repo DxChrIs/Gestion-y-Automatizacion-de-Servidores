@@ -1383,6 +1383,7 @@ resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
 #          CloudWatch Alarm Instance          #
 ###############################################
 # CPU Utilization >80%
+#-------------Linux Control Node-----------------
 resource "aws_cloudwatch_metric_alarm" "linux_control_node_alarm" {
     alarm_description = "Monitoring CPU Utilization"
     alarm_name          = "Linux-Control-Node"
@@ -1398,6 +1399,7 @@ resource "aws_cloudwatch_metric_alarm" "linux_control_node_alarm" {
         InstanceId = aws_instance.linux_control_node.id
     }
 }
+#------------Windows Control Node---------------
 resource "aws_cloudwatch_metric_alarm" "windows_control_node_alarm" {
     alarm_description = "Monitoring CPU Utilization"
     alarm_name          = "Windows-Control-Node"
@@ -1529,39 +1531,31 @@ resource "aws_cloudwatch_metric_alarm" "file_windows_scale_prevention" {
 # }
 
 ###############################################
-#     CloudWatch EventBridge EC2 Changes      #
+#            CloudWatch EventBridge           #
 ###############################################
-# resource "aws_cloudwatch_event_rule" "ec2_state_change" {
-#     name        = "EC2StateChange"
-#     description = "Captura cambios de estado de instancias EC2"
-#     event_pattern = jsonencode({
-#         source      = ["aws.ec2"],
-#         detail-type = ["EC2 Instance State-change Notification"]
-#     })
-# }
-# resource "aws_cloudwatch_event_target" "ec2_state_change_target" {
-#     rule = aws_cloudwatch_event_rule.ec2_state_change.name
-#     arn  = aws_cloudwatch_log_group.ec2_app_logs.arn
-# }
+resource "aws_cloudwatch_event_bus" "autodeployment_bus" {
+    name = "autodeployment-server-bus"
+}
+resource "aws_cloudwatch_event_rule" "ec2_state_change" {
+    name        = "EC2StateChange"
+    description = "Captura cambios de estado de instancias EC2"
+    event_bus_name = aws_cloudwatch_event_bus.autodeployment_bus.name
+    event_pattern = file("/event_patterns/ec2_changes.json")
+}
+resource "aws_cloudwatch_event_target" "ec2_state_change_target" {
+    rule = aws_cloudwatch_event_rule.ec2_state_change.name
+    event_bus_name = aws_cloudwatch_event_bus.autodeployment_bus.name
+    arn  = aws_cloudwatch_log_group.ec2_app_logs.arn
+}
 
 ###############################################
 #           CloudWatch Log Groups             #
 ###############################################
 # Logs de las aplicaciones (CloudWatch Agent)
-# resource "aws_cloudwatch_log_group" "ec2_app_logs" {
-#     name              = "/ec2/app-logs"
-#     retention_in_days = 1
-# }
-
-# # Logs de VPC Flow Logs
-# resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
-#     name              = "/vpc/flow-logs"
-#     lifecycle {
-#         ignore_changes = [
-#             name
-#         ]
-#     }
-# }
+resource "aws_cloudwatch_log_group" "ec2_app_logs" {
+    name              = "/ec2/control-node-logs"
+    retention_in_days = -1
+}
 
 ###############################################
 #                VPC Flow Logs                #
@@ -1575,7 +1569,7 @@ resource "aws_cloudwatch_metric_alarm" "file_windows_scale_prevention" {
 # }
 
 ###############################################
-#                 IAM Policy                  #
+#                 IAM Role                    #
 ###############################################
 resource "aws_iam_role" "ec2_role" {
     name = "ec2-readonly-role"
@@ -1593,6 +1587,10 @@ resource "aws_iam_role" "ec2_role" {
         ]
     })
 }
+
+###############################################
+#                IAM Policies                 #
+###############################################
 resource "aws_iam_policy" "ec2_get_password_data" {
     name        = "EC2GetPasswordDataPolicy"
     description = "Permite llamar a ec2:GetPasswordData"
@@ -1609,6 +1607,28 @@ resource "aws_iam_policy" "ec2_get_password_data" {
         ]
     })
 }
+resource "aws_iam_role_policy" "eventbridge_to_logs_policy" {
+    role = aws_iam_role.ec2_role.id
+
+    policy = jsonencode({
+        Version = "2012-10-17"
+        Statement = [
+        {
+            Effect = "Allow"
+            Action = [
+            "logs:PutLogEvents",
+            "logs:CreateLogStream",
+            "logs:DescribeLogStreams"
+            ]
+            Resource = "${aws_cloudwatch_log_group.eventbridge_logs.arn}:*"
+        }
+        ]
+    })
+}
+
+###############################################
+#              IAM Attachments                #
+###############################################
 resource "aws_iam_role_policy_attachment" "ec2_readonly_policy" {
     role       = aws_iam_role.ec2_role.name
     policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
@@ -1621,6 +1641,10 @@ resource "aws_iam_role_policy_attachment" "attach_get_password_data" {
     role       = aws_iam_role.ec2_role.name
     policy_arn = aws_iam_policy.ec2_get_password_data.arn
 }
+
+###############################################
+#               IAM Profile                   #
+###############################################
 resource "aws_iam_instance_profile" "ec2_instance_profile" {
     name = "ec2-instance-profile"
     role = aws_iam_role.ec2_role.name

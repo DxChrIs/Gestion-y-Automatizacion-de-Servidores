@@ -1,0 +1,4 @@
+{
+    "source": ["aws.elasticloadbalancing"],
+    "detail-type": ["Elastic Load Balancer Instance Health State Change"]
+}

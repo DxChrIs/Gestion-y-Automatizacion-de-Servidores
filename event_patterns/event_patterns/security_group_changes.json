@@ -1,0 +1,14 @@
+{
+    "source": ["aws.ec2"],
+    "detail-type": [
+        "AWS API Call"
+    ],
+    "detail": {
+        "eventName": [
+            "AuthorizeSecurityGroupIngress",
+            "AuthorizeSecurityGroupEgress",
+            "RevokeSecurityGroupIngress",
+            "RevokeSecurityGroupEgress"
+        ]
+    }
+}

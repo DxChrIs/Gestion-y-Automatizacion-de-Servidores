@@ -1,0 +1,7 @@
+{
+    "source": ["aws.rds"],
+    "detail-type": ["RDS DB Instance Event"],
+    "detail": {
+        "EventCategories": ["failure", "failover", "maintenance"]
+    }
+}
