@@ -1123,8 +1123,7 @@ resource "aws_lb" "web_linux_lb" {
 resource "aws_lb" "sql_linux_lb" {
     name               = "sql-linux-lb-${var.region}"
     internal           = false
-    load_balancer_type = "application"
-    security_groups    = [aws_security_group.sql_linux_access.id]
+    load_balancer_type = "network"
     subnets            = [aws_subnet.public_subnet1.id, 
                             aws_subnet.public_subnet2.id]
 
