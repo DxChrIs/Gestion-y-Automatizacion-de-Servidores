@@ -1102,8 +1102,8 @@ resource "aws_lb_target_group" "web_linux_tg" {
 #-------------Linux sql server---------------
 resource "aws_lb_target_group" "sql_linux_tg" {
     name     = "sql-linux-tg-${var.region}"
-    port     = 80
-    protocol = "HTTP"
+    port     = 3306
+    protocol = "TCP"
     vpc_id   = aws_vpc.main.id
 }
 #--------------Linux web server---------------
@@ -1145,8 +1145,8 @@ resource "aws_lb_listener" "web_linux_lb_listener" {
 #-------------Linux sql server---------------
 resource "aws_lb_listener" "sql_linux_lb_listener" {
     load_balancer_arn = aws_lb.sql_linux_lb.arn
-    port              = 80
-    protocol          = "HTTP"
+    port              = 3306
+    protocol          = "TCP"
     default_action {
         type             = "forward"
         target_group_arn = aws_lb_target_group.sql_linux_tg.arn
