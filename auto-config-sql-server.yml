@@ -175,3 +175,9 @@
     - name: Mostrar estado del plugin audit_log
       debug:
         msg: "Audit log plugin status: {{ audit_log_vars.query_result }}"
+
+  handlers:
+    - name: Restart MySQL
+      service:
+        name: mysql
+        state: restarted
