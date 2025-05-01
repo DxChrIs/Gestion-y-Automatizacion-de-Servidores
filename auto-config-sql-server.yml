@@ -52,8 +52,8 @@
         query: |
           INSERT INTO testdb.users (name, email)
           VALUES ('John Doe', 'john.doe@example.com'),
-                 ('Jane Smith', 'jane.smith@example.com'),
-                 ('Emily Johnson', 'emily.johnson@example.com');
+                  ('Jane Smith', 'jane.smith@example.com'),
+                  ('Emily Johnson', 'emily.johnson@example.com');
         login_user: root
         login_password: "ElAdmin1853"
 
