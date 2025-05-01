@@ -83,11 +83,13 @@
         policy: Success and Failure
         state: enabled
 
+    - name: Asegurarse de que la carpeta de backup de IIS existe
+      win_file:
+        path: "{{ backup_dir }}"
+        state: directory
+
     - name: Crear un backup de la configuración de IIS
       win_shell: |
-        if (!(Test-Path -Path "{{ backup_dir }}")) {
-          New-Item -Path "{{ backup_dir }}" -ItemType Directory
-        }
         cd C:\Windows\System32\inetsrv
         .\appcmd.exe add backup "Backup_$(Get-Date -Format 'yyyyMMdd')"
       args:
@@ -127,6 +129,11 @@
         ip: "*"
         port: 80
         protocol: "http"
+
+    - name: Crear carpeta para scripts de monitoreo
+      win_file:
+        path: "C:\\inetpub\\scripts"
+        state: directory
 
     - name: Crear un script de monitoreo para verificar el estado del sitio
       win_copy:
