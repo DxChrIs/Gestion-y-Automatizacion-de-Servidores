@@ -130,7 +130,7 @@
           audit_log_format = JSON
           audit_log_policy = ALL
       notify: Restart MySQL
-      when: install_audit_log_result.changed
+      when: install_audit_log_result is defined and install_audit_log_result.changed
 
     - name: Verificar que el plugin audit_log esté activo
       mysql_query:
