@@ -121,6 +121,7 @@
     # 2. Login Banner con advertencia legal
     # --------------------------
     - name: Crear banner de advertencia legal
+      become: yes
       copy:
         dest: /etc/issue.net
         content: |
@@ -129,12 +130,17 @@
           * Toda actividad es monitoreada y registrada.                 *
           * El acceso no autorizado será investigado y reportado.       *
           ****************************************************************
+        owner: root
+        group: root
+        mode: '0644'
 
     - name: Configurar SSH para usar el banner legal
+      become: yes
       lineinfile:
         path: /etc/ssh/sshd_config
-        regexp: '^Banner'
+        regexp: '^#?Banner'
         line: 'Banner /etc/issue.net'
+        state: present
 
     - name: Reiniciar servicio SSH
       service:
