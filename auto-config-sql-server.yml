@@ -150,9 +150,3 @@
           audit_log_policy = ALL
       notify:
         - Restart MySQL
-
-  handlers:
-    - name: Restart MySQL
-      service:
-        name: mysql
-        state: restarted
