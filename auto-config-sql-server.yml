@@ -26,9 +26,9 @@
         timeout: 15
 
     - name: Configurar root con contraseña y plugin mysql_native_password
-      command: >
-        mysql -u root -S /var/run/mysqld/mysqld.sock
-        -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'ElAdmin1853'; FLUSH PRIVILEGES;"
+      shell: |
+        mysql -u root -S /var/run/mysqld/mysqld.sock -e \
+        "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'ElAdmin1853'; FLUSH PRIVILEGES;"
       args:
         warn: false
 
