@@ -126,12 +126,21 @@
         port: 3306
         proto: tcp
 
-    - name: Habilitar plugin de auditoría nativa de MySQL
+    - name: Verificar si el plugin audit_log está instalado
+      mysql_query:
+        query: "SHOW PLUGINS LIKE 'audit_log';"
+        login_user: root
+        login_password: "ElAdmin1853"
+      register: audit_log_status
+      ignore_errors: yes
+
+    - name: Instalar el plugin de auditoría si no está instalado
       mysql_query:
         query: "INSTALL PLUGIN audit_log SONAME 'audit_log.so';"
         login_user: root
         login_password: "ElAdmin1853"
-      ignore_errors: yes  # Evita fallos si ya está instalado
+      when: audit_log_status.query_result | length == 0
+      ignore_errors: yes  # Evita que falle si ya está instalado
 
     - name: Crear archivo de log de auditoría si no existe
       file:
@@ -150,3 +159,19 @@
           audit_log_policy = ALL
       notify:
         - Restart MySQL
+
+    - name: Reiniciar MySQL para aplicar cambios
+      service:
+        name: mysql
+        state: restarted
+
+    - name: Verificar si el plugin audit_log se cargó correctamente
+      mysql_query:
+        query: "SHOW VARIABLES LIKE 'audit_log%'"
+        login_user: root
+        login_password: "ElAdmin1853"
+      register: audit_log_vars
+
+    - name: Mostrar estado del plugin audit_log
+      debug:
+        msg: "Audit log plugin status: {{ audit_log_vars.query_result }}"
