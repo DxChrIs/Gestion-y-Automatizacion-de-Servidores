@@ -4,15 +4,12 @@
   become: yes
 
   tasks:
-    - name: Instalar PyMySQL para que Ansible pueda usar los módulos MySQL
+    - name: Instalar dependencias necesarias
       apt:
-        name: python3-pymysql
-        state: present
-        update_cache: yes
-
-    - name: Instalar MySQL Server
-      apt:
-        name: mysql-server
+        name:
+          - python3-pymysql
+          - mysql-server
+          - fail2ban
         state: present
         update_cache: yes
 
@@ -22,15 +19,18 @@
         state: started
         enabled: yes
 
-    - name: Configurar contraseña compleja y plugin para root (login con contraseña)
-      become: yes
-      mysql_user:
-        name: root
-        host: localhost
-        password: "ElAdmin1853"
-        plugin: mysql_native_password
-        login_unix_socket: /var/run/mysqld/mysqld.sock
+    - name: Esperar a que el socket de MySQL esté disponible
+      wait_for:
+        path: /var/run/mysqld/mysqld.sock
         state: present
+        timeout: 15
+
+    - name: Configurar root con contraseña y plugin mysql_native_password
+      command: >
+        mysql -u root -S /var/run/mysqld/mysqld.sock
+        -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'ElAdmin1853'; FLUSH PRIVILEGES;"
+      args:
+        warn: false
 
     - name: Crear base de datos "testdb"
       mysql_db:
@@ -39,7 +39,7 @@
         login_user: root
         login_password: "ElAdmin1853"
 
-    - name: Crear tabla de prueba "users" en "testdb"
+    - name: Crear tabla "users" en "testdb"
       mysql_query:
         query: |
           CREATE TABLE IF NOT EXISTS testdb.users (
@@ -51,7 +51,7 @@
         login_user: root
         login_password: "ElAdmin1853"
 
-    - name: Insertar datos de prueba en la tabla "users"
+    - name: Insertar datos de prueba en "users"
       mysql_query:
         query: |
           INSERT INTO testdb.users (name, email)
@@ -68,42 +68,21 @@
         login_user: root
         login_password: "ElAdmin1853"
 
-    - name: Crear usuario con todos los privilegios en testdb
+    - name: Crear usuarios con diferentes privilegios
       mysql_user:
-        name: myuser
-        password: securepassword
+        name: "{{ item.name }}"
+        password: "{{ item.pass }}"
         host: "%"
-        priv: "testdb.*:ALL"
+        priv: "{{ item.priv }}"
         state: present
         login_user: root
         login_password: "ElAdmin1853"
+      loop:
+        - { name: myuser, pass: securepassword, priv: "testdb.*:ALL" }
+        - { name: mysql_user2, pass: readpassword, priv: "testdb.*:SELECT" }
+        - { name: mysql_user3, pass: writepassword, priv: "testdb.*:INSERT,UPDATE" }
 
-    - name: Crear usuario solo lectura en testdb
-      mysql_user:
-        name: mysql_user2
-        password: readpassword
-        host: "%"
-        priv: "testdb.*:SELECT"
-        state: present
-        login_user: root
-        login_password: "ElAdmin1853"
-
-    - name: Crear usuario solo escritura en testdb
-      mysql_user:
-        name: mysql_user3
-        password: writepassword
-        host: "%"
-        priv: "testdb.*:INSERT,UPDATE"
-        state: present
-        login_user: root
-        login_password: "ElAdmin1853"
-
-    - name: Instalar fail2ban
-      apt:
-        name: fail2ban
-        state: present
-
-    - name: Crear grupo de administración ACL para usuarios de MySQL
+    - name: Crear grupo ACL para administradores MySQL
       group:
         name: mysqladmins
         state: present
@@ -115,17 +94,12 @@
         line: 'secure_file_priv = /var/lib/mysql-files'
       notify: Restart MySQL
 
-    - name: Configurar UFW - permitir SSH
+    - name: Configurar UFW - permitir SSH y MySQL
       ufw:
         rule: allow
-        port: 22
-
-    - name: Habilitar y permitir acceso al puerto 3306 (MySQL)
-      ufw:
-        state: enabled
-        rule: allow
-        port: 3306
+        port: "{{ item }}"
         proto: tcp
+      loop: [22, 3306]
 
     - name: Verificar si el plugin audit_log está instalado
       mysql_query:
@@ -135,15 +109,15 @@
       register: audit_log_status
       ignore_errors: yes
 
-    - name: Instalar el plugin de auditoría si no está instalado
+    - name: Instalar plugin de auditoría si no está instalado
       mysql_query:
         query: "INSTALL PLUGIN audit_log SONAME 'audit_log.so';"
         login_user: root
         login_password: "ElAdmin1853"
       when: audit_log_status.query_result | length == 0
-      ignore_errors: yes  # Evita que falle si ya está instalado
+      ignore_errors: yes
 
-    - name: Crear archivo de log de auditoría si no existe
+    - name: Crear archivo de log de auditoría
       file:
         path: /var/log/mysql/audit.log
         state: touch
@@ -151,22 +125,16 @@
         group: adm
         mode: '0640'
 
-    - name: Configurar auditoría básica en mysqld.cnf (MySQL nativo)
+    - name: Configurar auditoría en mysqld.cnf
       blockinfile:
         path: /etc/mysql/mysql.conf.d/mysqld.cnf
         block: |
           audit_log_file = /var/log/mysql/audit.log
           audit_log_format = JSON
           audit_log_policy = ALL
-      notify:
-        - Restart MySQL
+      notify: Restart MySQL
 
-    - name: Reiniciar MySQL para aplicar cambios
-      service:
-        name: mysql
-        state: restarted
-
-    - name: Verificar si el plugin audit_log se cargó correctamente
+    - name: Verificar que el plugin audit_log esté activo
       mysql_query:
         query: "SHOW VARIABLES LIKE 'audit_log%'"
         login_user: root
