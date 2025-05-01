@@ -61,6 +61,12 @@
       when: item.sudo
       loop: "{{ apache_users }}"
 
+    - name: Instalar soporte para ACL
+      apt:
+        name: acl
+        state: present
+        update_cache: yes
+
     - name: Establecer permisos ACL sobre /var/www/html
       acl:
         path: /var/www/html
