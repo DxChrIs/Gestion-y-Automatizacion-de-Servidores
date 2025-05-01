@@ -123,7 +123,7 @@
     - name: Crear banner de advertencia legal
       become: yes
       copy:
-        dest: /etc/issue.net
+        dest: /etc/ssh/banner.txt
         content: |
           ****************************************************************
           * ADVERTENCIA: Este sistema es solo para uso autorizado.       *
@@ -139,7 +139,7 @@
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: '^#?Banner'
-        line: 'Banner /etc/issue.net'
+        line: 'Banner /etc/ssh/banner.txt'
         state: present
 
     - name: Reiniciar servicio SSH
@@ -154,6 +154,7 @@
       apt:
         name: logwatch
         state: present
+        update_cache: yes
 
     - name: Configurar logwatch para enviar reportes diarios
       lineinfile:
@@ -168,6 +169,7 @@
       apt:
         name: auditd
         state: present
+        update_cache: yes
 
     - name: Habilitar servicio auditd
       service:
