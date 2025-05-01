@@ -4,6 +4,12 @@
   become: yes
 
   tasks:
+    - name: Instalar PyMySQL para que Ansible pueda usar los módulos MySQL
+      apt:
+        name: python3-pymysql
+        state: present
+        update_cache: yes
+
     - name: Instalar MySQL Server
       apt:
         name: mysql-server
