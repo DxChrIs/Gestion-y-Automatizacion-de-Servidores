@@ -29,6 +29,8 @@
       mysql_db:
         name: testdb
         state: present
+        login_user: root
+        login_password: "ElAdmin1853"
 
     - name: Crear tabla de prueba "users" en "testdb"
       mysql_query:
@@ -39,6 +41,8 @@
             email VARCHAR(100) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
           );
+        login_user: root
+        login_password: "ElAdmin1853"
 
     - name: Insertar datos de prueba en la tabla "users"
       mysql_query:
@@ -47,11 +51,15 @@
           VALUES ('John Doe', 'john.doe@example.com'),
                   ('Jane Smith', 'jane.smith@example.com'),
                   ('Emily Johnson', 'emily.johnson@example.com');
+        login_user: root
+        login_password: "ElAdmin1853"
 
     - name: Crear base de datos "mydb"
       mysql_db:
         name: mydb
         state: present
+        login_user: root
+        login_password: "ElAdmin1853"
 
     - name: Crear usuario con todos los privilegios en testdb
       mysql_user:
@@ -60,6 +68,8 @@
         host: "%"
         priv: "testdb.*:ALL"
         state: present
+        login_user: root
+        login_password: "ElAdmin1853"
 
     - name: Crear usuario solo lectura en testdb
       mysql_user:
@@ -68,6 +78,8 @@
         host: "%"
         priv: "testdb.*:SELECT"
         state: present
+        login_user: root
+        login_password: "ElAdmin1853"
 
     - name: Crear usuario solo escritura en testdb
       mysql_user:
@@ -76,6 +88,8 @@
         host: "%"
         priv: "testdb.*:INSERT,UPDATE"
         state: present
+        login_user: root
+        login_password: "ElAdmin1853"
 
     - name: Instalar fail2ban
       apt:
@@ -92,6 +106,8 @@
         name: secure-file-priv
         value: "/var/lib/mysql-files"
         state: present
+        login_user: root
+        login_password: "ElAdmin1853"
 
     - name: Configurar UFW - permitir SSH
       ufw:
