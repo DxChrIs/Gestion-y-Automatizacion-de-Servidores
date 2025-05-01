@@ -99,7 +99,7 @@
 
     - name: Verificar si el plugin audit_log está instalado
       mysql_query:
-        query: "SHOW PLUGINS LIKE 'audit_log';"
+        query: "SHOW PLUGINS"
         login_user: root
         login_password: "ElAdmin1853"
       register: audit_log_status
@@ -110,9 +110,8 @@
         query: "INSTALL PLUGIN audit_log SONAME 'audit_log.so';"
         login_user: root
         login_password: "ElAdmin1853"
-      when: audit_log_status.query_result | length == 0
+      when: audit_log_status.query_result is defined and audit_log_status.query_result | length == 0
       ignore_errors: yes
-      register: install_audit_log_result
 
     - name: Crear archivo de log de auditoría
       file:
@@ -121,7 +120,7 @@
         owner: mysql
         group: adm
         mode: '0640'
-      when: install_audit_log_result.changed
+      when: install_audit_log_result is defined and install_audit_log_result.changed
 
     - name: Configurar auditoría en mysqld.cnf
       blockinfile:
