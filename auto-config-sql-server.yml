@@ -23,6 +23,7 @@
         enabled: yes
 
     - name: Configurar contraseña compleja y plugin para root (login con contraseña)
+      become: yes
       mysql_user:
         name: root
         host: localhost
