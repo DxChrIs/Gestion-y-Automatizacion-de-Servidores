@@ -107,17 +107,16 @@
         name: mysqladmins
         state: present
 
-    - name: Configurar archivo seguro para exportaciones en MySQL
-      mysql_variables:
-        variable: secure_file_priv
-        value: "/var/lib/mysql-files"
-        login_user: root
-        login_password: "ElAdmin1853"
+    - name: Establecer secure_file_priv para exportaciones
+      lineinfile:
+        path: /etc/mysql/mysql.conf.d/mysqld.cnf
+        regexp: '^secure_file_priv'
+        line: 'secure_file_priv = /var/lib/mysql-files'
+      notify: Restart MySQL
 
     - name: Configurar UFW - permitir SSH
       ufw:
         rule: allow
-        name: "OpenSSH"
         port: 22
 
     - name: Habilitar y permitir acceso al puerto 3306 (MySQL)
@@ -127,19 +126,28 @@
         port: 3306
         proto: tcp
 
-    - name: Realizar backup completo de MySQL
-      shell: mysqldump --all-databases > /var/backups/all_databases_$(date +'%Y-%m-%d').sql
-      register: backup_result
+    - name: Habilitar plugin de auditoría nativa de MySQL
+      mysql_query:
+        query: "INSTALL PLUGIN audit_log SONAME 'audit_log.so';"
+        login_user: root
+        login_password: "ElAdmin1853"
+      ignore_errors: yes  # Evita fallos si ya está instalado
 
-    - name: Mostrar resultado del backup
-      debug:
-        msg: "Backup realizado correctamente."
+    - name: Crear archivo de log de auditoría si no existe
+      file:
+        path: /var/log/mysql/audit.log
+        state: touch
+        owner: mysql
+        group: adm
+        mode: '0640'
 
-    - name: Configurar auditoría básica en MySQL
-      lineinfile:
+    - name: Configurar auditoría básica en mysqld.cnf (MySQL nativo)
+      blockinfile:
         path: /etc/mysql/mysql.conf.d/mysqld.cnf
-        regexp: '^#?audit_log'
-        line: 'audit_log=FORCE_PLUS_PERMANENT'
+        block: |
+          audit_log_file = /var/log/mysql/audit.log
+          audit_log_format = JSON
+          audit_log_policy = ALL
       notify:
         - Restart MySQL
 
