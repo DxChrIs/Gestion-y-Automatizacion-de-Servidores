@@ -111,7 +111,6 @@
       mysql_variables:
         variable: secure_file_priv
         value: "/var/lib/mysql-files"
-        state: present
         login_user: root
         login_password: "ElAdmin1853"
 
