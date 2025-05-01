@@ -52,8 +52,8 @@
         query: |
           INSERT INTO testdb.users (name, email)
           VALUES ('John Doe', 'john.doe@example.com'),
-                  ('Jane Smith', 'jane.smith@example.com'),
-                  ('Emily Johnson', 'emily.johnson@example.com');
+                 ('Jane Smith', 'jane.smith@example.com'),
+                 ('Emily Johnson', 'emily.johnson@example.com');
         login_user: root
         login_password: "ElAdmin1853"
 
@@ -112,6 +112,7 @@
         login_password: "ElAdmin1853"
       when: audit_log_status.query_result | length == 0
       ignore_errors: yes
+      register: install_audit_log_result
 
     - name: Crear archivo de log de auditoría
       file:
@@ -120,6 +121,7 @@
         owner: mysql
         group: adm
         mode: '0640'
+      when: install_audit_log_result.changed
 
     - name: Configurar auditoría en mysqld.cnf
       blockinfile:
@@ -129,6 +131,7 @@
           audit_log_format = JSON
           audit_log_policy = ALL
       notify: Restart MySQL
+      when: install_audit_log_result.changed
 
     - name: Verificar que el plugin audit_log esté activo
       mysql_query:
@@ -146,3 +149,4 @@
       service:
         name: mysql
         state: restarted
+      when: install_audit_log_result.changed
