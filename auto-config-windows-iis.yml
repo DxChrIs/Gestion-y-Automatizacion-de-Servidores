@@ -129,15 +129,6 @@
           - Administrators
           - "{{ group_name }}"
 
-    - name: Configurar política de auditoría inicio de sesión de cuentas (éxito y fallo)
-      win_shell: |
-        auditpol /set /subcategory:"Logon" /success:enable /failure:enable
-        auditpol /set /subcategory:"Logoff" /success:enable /failure:enable
-        auditpol /set /subcategory:"Account Lockout" /success:enable /failure:enable
-        auditpol /set /subcategory:"Logon/Logoff" /success:enable /failure:enable
-      args:
-        executable: powershell
-
     - name: Verificar que el servicio de IIS está en ejecución
       win_service:
         name: W3SVC
