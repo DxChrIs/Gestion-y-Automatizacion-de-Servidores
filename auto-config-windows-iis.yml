@@ -92,11 +92,20 @@
         path: "C:\\IISBackup"
         state: directory
 
+    - name: Verificar si el backup ya existe
+      win_shell: |
+        if (Test-Path "C:\Windows\System32\inetsrv\backup\Backup_$(Get-Date -Format 'yyyyMMdd')") { exit 0 } else { exit 1 }
+      register: backup_existe
+      args:
+        executable: powershell
+      ignore_errors: true
+    
     - name: Crear un backup de la configuración de IIS
       win_shell: |
         C:\Windows\System32\inetsrv\appcmd.exe add backup "Backup_$(Get-Date -Format 'yyyyMMdd')"
       args:
         executable: powershell
+      when: backup_existe.rc != 0
 
     - name: Copiar backup a la carpeta definida
       win_shell: |
@@ -104,6 +113,7 @@
         Copy-Item "C:\Windows\System32\inetsrv\backup\Backup_$today" -Destination "C:\IISBackup\Backup_$today" -Recurse
       args:
         executable: powershell
+      when: backup_existe.rc != 0
 
     - name: Crear grupo de seguridad para administradores de IIS
       win_group:
