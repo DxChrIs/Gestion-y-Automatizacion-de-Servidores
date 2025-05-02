@@ -85,13 +85,19 @@
 
     - name: Asegurarse de que la carpeta de backup de IIS existe
       win_file:
-        path: "{{ backup_dir }}"
+        path: "C:\\IISBackup"
         state: directory
 
     - name: Crear un backup de la configuración de IIS
       win_shell: |
-        cd C:\Windows\System32\inetsrv
-        .\appcmd.exe add backup "Backup_$(Get-Date -Format 'yyyyMMdd')"
+        C:\Windows\System32\inetsrv\appcmd.exe add backup "Backup_$(Get-Date -Format 'yyyyMMdd')"
+      args:
+        executable: powershell
+
+    - name: Copiar backup a la carpeta definida
+      win_shell: |
+        $today = Get-Date -Format 'yyyyMMdd'
+        Copy-Item "C:\Windows\System32\inetsrv\backup\Backup_$today" -Destination "C:\IISBackup\Backup_$today" -Recurse
       args:
         executable: powershell
 
