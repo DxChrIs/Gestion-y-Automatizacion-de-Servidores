@@ -79,6 +79,7 @@
 
     - name: Configurar la auditoría de IIS
       win_audit_policy_system:
+        audit_type: Subcategory
         category: Logon/Logoff
         subcategory: Logon
         policy: Success and Failure
@@ -86,6 +87,7 @@
 
     - name: Configurar políticas de auditoría de acceso a archivos
       win_audit_policy_system:
+        audit_type: Subcategory
         category: Object Access
         subcategory: File System
         policy: Success and Failure
