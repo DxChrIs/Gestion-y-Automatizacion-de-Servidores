@@ -80,7 +80,7 @@
     - name: Configurar la auditoría de IIS
       win_audit_policy_system:
         category: Logon/Logoff
-        subcategory: Logon/Logoff Events
+        subcategory: Logon
         policy: Success and Failure
         state: enabled
 
