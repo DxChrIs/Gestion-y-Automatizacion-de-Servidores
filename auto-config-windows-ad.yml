@@ -84,7 +84,6 @@
         state: present
         enabled: true
         user_cannot_change_password: no
-        password_never_expires: no
         groups:
           add:
             - "Empleados"
