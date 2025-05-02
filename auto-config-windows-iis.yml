@@ -79,17 +79,13 @@
 
     - name: Configurar la auditoría de IIS
       win_audit_policy_system:
-        audit_type: Subcategory
+        audit_type: success, failure
         category: Logon/Logoff
-        policy: Success and Failure
-        state: enabled
 
     - name: Configurar políticas de auditoría de acceso a archivos
       win_audit_policy_system:
-        audit_type: Subcategory
+        audit_type: success, failure
         category: Object Access
-        policy: Success and Failure
-        state: enabled
 
     - name: Asegurarse de que la carpeta de backup de IIS existe
       win_file:
