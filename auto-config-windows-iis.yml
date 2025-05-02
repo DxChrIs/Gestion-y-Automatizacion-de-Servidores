@@ -129,11 +129,14 @@
           - Administrators
           - "{{ group_name }}"
 
-    - name: Configurar la política de auditoría para eventos de cuenta
-      win_security_policy:
-        section: "Event Audit"
-        key: "Audit account logon events"
-        value: "Success and Failure"
+    - name: Configurar política de auditoría inicio de sesión de cuentas (éxito y fallo)
+      win_shell: |
+        auditpol /set /subcategory:"Logon" /success:enable /failure:enable
+        auditpol /set /subcategory:"Logoff" /success:enable /failure:enable
+        auditpol /set /subcategory:"Account Lockout" /success:enable /failure:enable
+        auditpol /set /subcategory:"Logon/Logoff" /success:enable /failure:enable
+      args:
+        executable: powershell
 
     - name: Verificar que el servicio de IIS está en ejecución
       win_service:
