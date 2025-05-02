@@ -81,7 +81,6 @@
       win_audit_policy_system:
         audit_type: Subcategory
         category: Logon/Logoff
-        subcategory: Logon
         policy: Success and Failure
         state: enabled
 
@@ -89,7 +88,6 @@
       win_audit_policy_system:
         audit_type: Subcategory
         category: Object Access
-        subcategory: File System
         policy: Success and Failure
         state: enabled
 
