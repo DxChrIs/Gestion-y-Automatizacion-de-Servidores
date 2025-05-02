@@ -129,11 +129,11 @@
           - Administrators
           - "{{ group_name }}"
 
-    - name: Configurar la política de auditoría para el sistema
+    - name: Configurar la política de auditoría para eventos de cuenta
       win_security_policy:
-        name: AuditPolicy
-        value: "Audit all accounts"
-        state: present
+        section: "Event Audit"
+        key: "Audit account logon events"
+        value: "Success and Failure"
 
     - name: Verificar que el servicio de IIS está en ejecución
       win_service:
