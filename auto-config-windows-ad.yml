@@ -219,5 +219,8 @@
     - name: Configurar máxima expiración de contraseña
       win_shell: net accounts /maxpwage:60
 
-    - name: Configurar usuario para que su contraseña nunca expire
-      win_shell: net user user1 /passwordchg:yes /passwordreq:yes /expires:never
+    - name: Establecer que la contraseña de user1 nunca expire
+      microsoft.ad.user:
+        name: "user1"
+        password_never_expires: yes
+        state: present
