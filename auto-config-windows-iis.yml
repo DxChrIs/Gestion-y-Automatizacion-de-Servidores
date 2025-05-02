@@ -45,6 +45,13 @@
           </html>
         dest: "{{ site_path }}\\index.html"
 
+    - name: Verificar si el sitio ya existe
+      win_shell: |
+        Import-Module WebAdministration
+        if (Test-Path "IIS:\Sites\{{ site_name }}") { exit 0 } else { exit 1 }
+      register: sitio_existente
+      ignore_errors: true
+
     - name: Crear nuevo sitio web en IIS
       win_iis_website:
         name: "{{ site_name }}"
@@ -53,6 +60,7 @@
         physical_path: "{{ site_path }}"
         hostname: ""
         ip: "*"
+      when: sitio_existente.rc != 0
 
     - name: Asegurar que el servicio de IIS está iniciado
       win_service:
