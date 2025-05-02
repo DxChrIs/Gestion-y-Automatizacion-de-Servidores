@@ -105,6 +105,11 @@
       args:
         executable: powershell
 
+    - name: Crear grupo de seguridad para administradores de IIS
+      win_group:
+        name: "{{ group_name }}"
+        state: present
+
     - name: Crear usuario administrativo para IIS
       win_user:
         name: "{{ username }}"
@@ -113,13 +118,6 @@
         groups:
           - Administrators
           - "{{ group_name }}"
-
-    - name: Crear grupo de seguridad para administradores de IIS
-      win_group:
-        name: "{{ group_name }}"
-        state: present
-        members:
-          - "{{ username }}"
 
     - name: Configurar la política de auditoría para el sistema
       win_security_policy:
