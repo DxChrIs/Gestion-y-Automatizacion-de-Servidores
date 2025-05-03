@@ -1227,7 +1227,7 @@ resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
                 height  = 6
 
                 properties = {
-                    title   = "Web-Linux-Control-Node Resource"
+                    title   = "Web-Linux-Server Resource"
                     region  = var.region
                     stat    = "Average"
                     period  = 120
@@ -1250,7 +1250,7 @@ resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
                 height  = 6
 
                 properties = {
-                    title   = "SQL-Linux-Control-Node Resource"
+                    title   = "SQL-Linux-Server Resource"
                     region  = var.region
                     stat    = "Average"
                     period  = 120
@@ -1273,7 +1273,7 @@ resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
                 height  = 6
 
                 properties = {
-                    title   = "IIS-Windows-Control-Node Resource"
+                    title   = "IIS-Windows-Server Resource"
                     region  = var.region
                     stat    = "Average"
                     period  = 120
@@ -1296,7 +1296,7 @@ resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
                 height  = 6
 
                 properties = {
-                    title   = "AD-Windows-Control-Node Resource"
+                    title   = "AD-Windows-Server Resource"
                     region  = var.region
                     stat    = "Average"
                     period  = 120
@@ -1319,7 +1319,7 @@ resource "aws_cloudwatch_dashboard" "autodeployment_dashboard" {
                 height  = 6
 
                 properties = {
-                    title   = "File-Windows-Control-Node Resource"
+                    title   = "File-Windows-Server Resource"
                     region  = var.region
                     stat    = "Average"
                     period  = 120
